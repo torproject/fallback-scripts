@@ -3,11 +3,18 @@
 # Usage:
 #
 # Regenerate the list:
-# ./updateFallbackDirs.py > ../tor/src/app/config/fallback_dirs.inc 2> fallback_dirs.log
+# $ FB_MODE=""
+# $ FB_DATE=`date -u "+%Y-%m-%d-%H-%M-%S"`
+# $ FB_COUNTRY=ZZ
+# $ FB_COMMIT=`git rev-parse --short=16 HEAD`
+# $ ./updateFallbackDirs.py $FB_MODE \
+#     > fallback_dirs_"$FB_DATE"_"$FB_COUNTRY"_"$FB_COMMIT".inc \
+#     2> fallback_dirs_"$FB_DATE"_"$FB_COUNTRY"_"$FB_COMMIT".log
+# $ cp fallback_dirs_*.inc ../tor/src/app/config/fallback_dirs.inc
 #
 # Check the existing list:
-# ./updateFallbackDirs.py check_existing > fallback_dirs.inc.ok 2> fallback_dirs.log
-# mv fallback_dirs.inc.ok ../tor/src/app/config/fallback_dirs.inc
+# $ FB_MODE="check_existing"
+# Then use the commands above.
 #
 # This script should be run from a stable, reliable network connection,
 # with no other network activity (and not over tor).
