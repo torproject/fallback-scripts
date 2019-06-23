@@ -3,11 +3,11 @@
 # Usage:
 #
 # Regenerate the list:
-# scripts/maint/updateFallbackDirs.py > src/app/config/fallback_dirs.inc 2> fallback_dirs.log
+# ./updateFallbackDirs.py > ../tor/src/app/config/fallback_dirs.inc 2> fallback_dirs.log
 #
 # Check the existing list:
-# scripts/maint/updateFallbackDirs.py check_existing > fallback_dirs.inc.ok 2> fallback_dirs.log
-# mv fallback_dirs.inc.ok src/app/config/fallback_dirs.inc
+# ./updateFallbackDirs.py check_existing > fallback_dirs.inc.ok 2> fallback_dirs.log
+# mv fallback_dirs.inc.ok ../tor/src/app/config/fallback_dirs.inc
 #
 # This script should be run from a stable, reliable network connection,
 # with no other network activity (and not over tor).
@@ -153,8 +153,8 @@ LOCAL_FILES_ONLY = False
 # When True, they are included, when False, they are excluded
 INCLUDE_UNLISTED_ENTRIES = True if OUTPUT_CANDIDATES else False
 
-WHITELIST_FILE_NAME = 'scripts/maint/fallback.whitelist'
-FALLBACK_FILE_NAME  = 'src/app/config/fallback_dirs.inc'
+WHITELIST_FILE_NAME = 'fallback.whitelist'
+FALLBACK_FILE_NAME  = '../tor/src/app/config/fallback_dirs.inc'
 
 # The number of bytes we'll read from a filter file before giving up
 MAX_LIST_FILE_SIZE = 1024 * 1024
