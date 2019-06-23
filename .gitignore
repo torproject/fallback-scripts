@@ -21,3 +21,5 @@ uptime-*.json
 *.last_modified
 # fallback dir lists: these get committed to the tor repository
 *.inc
+# old fallback dir lists
+*.old
