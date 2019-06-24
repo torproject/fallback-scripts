@@ -1058,3 +1058,12 @@
 # https://trac.torproject.org/projects/tor/ticket/30789#comment:2
 86.59.119.83:80 orport=443 id=57F273716C5310EEEC6B945E634FAEE2F5F7B04D ipv6=[2001:858:2:30:86:59:119:83]:443 # ph3x
 86.59.119.88:80 orport=443 id=AFFA85820D6796BECDD81E2DA88B0DBA696278E3 ipv6=[2001:858:2:30:86:59:119:88]:443 # ph3x
+
+# Email sent directly to teor
+178.175.148.227:80 orport=443 id=7CF4CE93CAFBBE03E5187EF1BAC0758DEFF0E6D3 ipv6=[2a00:1dc0:caff:127::e359]:443 # raisapX
+
+# Email sent directly to teor
+# TODO: update entry when the authorities have the latest descriptor
+# C6B656BA6BC16E31115A1B2D56396A53165F3408 needs a DirPort
+# (This entry will match on IPv4 and id, whatever the DirPort is.)
+71.60.192.20:543:0 orport=543 id=C6B656BA6BC16E31115A1B2D56396A53165F3408 # JAJTorBits
