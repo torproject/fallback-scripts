@@ -2234,8 +2234,8 @@ def process_existing():
   list_fallbacks(whitelist, exact=True)
 
 def process_default():
-  logging.basicConfig(level=logging.WARNING)
-  logging.getLogger('stem').setLevel(logging.WARNING)
+  logging.basicConfig(level=logging.INFO)
+  logging.getLogger('stem').setLevel(logging.INFO)
   whitelist = {'data': read_from_file(WHITELIST_FILE_NAME, MAX_LIST_FILE_SIZE),
                'name': WHITELIST_FILE_NAME,
                'check_existing': False}
