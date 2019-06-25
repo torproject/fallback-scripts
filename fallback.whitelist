@@ -1063,7 +1063,7 @@
 178.175.148.227:80 orport=443 id=7CF4CE93CAFBBE03E5187EF1BAC0758DEFF0E6D3 ipv6=[2a00:1dc0:caff:127::e359]:443 # raisapX
 
 # Email sent directly to teor
-# TODO: update entry when the authorities have the latest descriptor
-# C6B656BA6BC16E31115A1B2D56396A53165F3408 needs a DirPort
-# (This entry will match on IPv4 and id, whatever the DirPort is.)
-71.60.192.20:543:0 orport=543 id=C6B656BA6BC16E31115A1B2D56396A53165F3408 # JAJTorBits
+71.60.192.20:49690 orport=543 id=C6B656BA6BC16E31115A1B2D56396A53165F3408 # JAJTorBits
+
+# https://lists.torproject.org/pipermail/tor-relays/2019-June/017438.html
+185.4.132.148:80 orport=443 id=E8D114B3C78D8E6E7FEB1004650DD632C2143C9E ipv6=[2a02:c500:2:f0::5492]:443 # libreonion1
