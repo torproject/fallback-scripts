@@ -1,0 +1,25 @@
+# Editor droppings
+\#*\#
+.#*
+*~
+*.swp
+*.swo
+# Diff droppings
+*.orig
+*.rej
+# Python droppings
+*.pyc
+*.pyo
+# Log files
+*.log
+# OSX junk
+.DS_Store
+# updateFallbackDirs.py temp files
+details-*.json
+uptime-*.json
+*.full_url
+*.last_modified
+# fallback dir lists: these get committed to the tor repository
+*.inc
+# old fallback dir lists
+*.old

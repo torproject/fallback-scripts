@@ -3,11 +3,18 @@
 # Usage:
 #
 # Regenerate the list:
-# scripts/maint/updateFallbackDirs.py > src/app/config/fallback_dirs.inc 2> fallback_dirs.log
+# $ FB_MODE=""
+# $ FB_DATE=`date -u "+%Y-%m-%d-%H-%M-%S"`
+# $ FB_COUNTRY=ZZ
+# $ FB_COMMIT=`git rev-parse --short=16 HEAD`
+# $ ./updateFallbackDirs.py $FB_MODE \
+#     > fallback_dirs_"$FB_DATE"_"$FB_COUNTRY"_"$FB_COMMIT".inc \
+#     2> fallback_dirs_"$FB_DATE"_"$FB_COUNTRY"_"$FB_COMMIT".log
+# $ cp fallback_dirs_*.inc ../tor/src/app/config/fallback_dirs.inc
 #
 # Check the existing list:
-# scripts/maint/updateFallbackDirs.py check_existing > fallback_dirs.inc.ok 2> fallback_dirs.log
-# mv fallback_dirs.inc.ok src/app/config/fallback_dirs.inc
+# $ FB_MODE="check_existing"
+# Then use the commands above.
 #
 # This script should be run from a stable, reliable network connection,
 # with no other network activity (and not over tor).
@@ -153,8 +160,8 @@ LOCAL_FILES_ONLY = False
 # When True, they are included, when False, they are excluded
 INCLUDE_UNLISTED_ENTRIES = True if OUTPUT_CANDIDATES else False
 
-WHITELIST_FILE_NAME = 'scripts/maint/fallback.whitelist'
-FALLBACK_FILE_NAME  = 'src/app/config/fallback_dirs.inc'
+WHITELIST_FILE_NAME = 'fallback.whitelist'
+FALLBACK_FILE_NAME  = '../tor/src/app/config/fallback_dirs.inc'
 
 # The number of bytes we'll read from a filter file before giving up
 MAX_LIST_FILE_SIZE = 1024 * 1024
@@ -2227,8 +2234,8 @@ def process_existing():
   list_fallbacks(whitelist, exact=True)
 
 def process_default():
-  logging.basicConfig(level=logging.WARNING)
-  logging.getLogger('stem').setLevel(logging.WARNING)
+  logging.basicConfig(level=logging.INFO)
+  logging.getLogger('stem').setLevel(logging.INFO)
   whitelist = {'data': read_from_file(WHITELIST_FILE_NAME, MAX_LIST_FILE_SIZE),
                'name': WHITELIST_FILE_NAME,
                'check_existing': False}
@@ -2257,17 +2264,17 @@ def list_fallbacks(whitelist, exact=False):
   """ Fetches required onionoo documents and evaluates the
       fallback directory criteria for each of the relays,
       passing exact to apply_filter_lists(). """
-  if whitelist['check_existing']:
-      print "/* type=fallback */"
-  else:
-      print "/* type=whitelist */"
-
+  print "/* type=fallback */"
   print ("/* version={} */"
          .format(cleanse_c_multiline_comment(FALLBACK_FORMAT_VERSION)))
   now = datetime.datetime.utcnow()
   timestamp = now.strftime('%Y%m%d%H%M%S')
   print ("/* timestamp={} */"
          .format(cleanse_c_multiline_comment(timestamp)))
+  if whitelist['check_existing']:
+      print "/* source=fallback */"
+  else:
+      print "/* source=whitelist */"
   # end the header with a separator, to make it easier for parsers
   print SECTION_SEPARATOR_COMMENT
 

@@ -10,14 +10,27 @@
 #
 # The latest relay details from Onionoo are included in the generated list.
 #
-# To check the hard-coded fallback list (for testing), use:
-# $ updateFallbackDirs.py check_existing
+# If a relay operator wants their relay to be a FallbackDir:
 #
-# If a relay operator wants their relay to be a FallbackDir,
-# enter the following information here:
+# Bulk Remove:
+# Put a list of fingerprints to remove, update, or add in remove.txt
+# $ grep -v -e "#" -e "^$" remove.txt | tr "\n" "|" > remove_g.txt
+# $ echo -n dummy >> remove_g.txt
+# $ mv fallback.whitelist fallback.whitelist.old
+# $ grep -E -v `cat remove_g.txt` fallback.whitelist.old > fallback.whitelist
+#
+# Bulk Add:
+# Put a list of fingerprints to update or add in add.txt
+# $ grep -v -e "#" -e "^$" add.txt | tr "\n" " " > add_g.txt
+# $ ./generateFallbackDirLine.py `cat add_g.txt` >> fallback.whitelist
+# Then check the added lines for errors.
+#
+# Quick Update:
+# $ generateFallbackDirLine.py fingerprint ...
+# Then paste the results into this file.
+#
+# Manually, Using This Format:
 # <IPv4>:<DirPort> orport=<ORPort> id=<ID> ( ipv6=[<IPv6>]:<IPv6 ORPort> )?
-# or use:
-# scripts/maint/generateFallbackDirLine.py fingerprint ...
 
 # https://lists.torproject.org/pipermail/tor-relays/2015-December/008362.html
 # https://trac.torproject.org/projects/tor/ticket/22321#comment:22
