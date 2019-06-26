@@ -1,32 +1,31 @@
-Tor protects your privacy on the internet by hiding the connection
-between your Internet address and the services you use. We believe Tor
-is reasonably secure, but please ensure you read the instructions and
-configure it properly.
+The Tor Fallback Scripts are used to generate the hard-coded fallback
+directory mirror lists for Tor. Tor uses fallback directory mirrors when it
+is first installed, to find the rest of the Tor network. It also uses them
+when its cached directory documents are very old.
 
-To build Tor from source:
-        ./configure && make && make install
+(Tor protects your privacy on the internet by hiding the connection between
+your Internet address and the services you use.)
 
-To build Tor from a just-cloned git repository:
-        sh autogen.sh && ./configure && make && make install
+To generate a fallback list using the current whitelist:
+        ./updateFallbackDirs.py
+
+To remove failed fallbacks from the existing hard-coded fallback list:
+        cd ..
+        git clone https://git.torproject.org/tor.git
+        cd fallback-scripts
+        ./updateFallbackDirs.py check_existing
+
+Instructions for updating the whitelist, rebuilding, and backporting:
+        https://trac.torproject.org/projects/tor/wiki/doc/UpdatingFallbackDirectoryMirrors
+
+What is a fallback directory mirror?
+        https://trac.torproject.org/projects/tor/wiki/doc/FallbackDirectoryMirrors
+
+Download new versions:
+        https://git.torproject.org/fallback-scripts.git
+
+Browse source code:
+        https://gitweb.torproject.org/fallback-scripts.git
 
 Home page:
         https://www.torproject.org/
-
-Download new versions:
-        https://www.torproject.org/download/download.html
-
-Documentation, including links to installation and setup instructions:
-        https://www.torproject.org/docs/documentation.html
-
-Making applications work with Tor:
-        https://wiki.torproject.org/projects/tor/wiki/doc/TorifyHOWTO
-
-Frequently Asked Questions:
-        https://www.torproject.org/docs/faq.html
-
-
-To get started working on Tor development:
-        See the doc/HACKING directory.
-
-Release timeline:
-         https://trac.torproject.org/projects/tor/wiki/org/teams/NetworkTeam/CoreTorReleases
