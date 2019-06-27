@@ -180,13 +180,13 @@ OUTPUT_SORT_FIELD = getenv_conf('TOR_FB_OUTPUT_SORT_FIELD',
                                 ('contact' if OUTPUT_CANDIDATES
                                  else 'fingerprint'), str)
 
-## OnionOO Settings
+## Onionoo Settings
 
 ONIONOO = getenv_conf('TOR_FB_ONIONOO',
                       'https://onionoo.torproject.org/', str)
 #ONIONOO = 'https://onionoo.thecthulhu.com/'
 
-# How many rows should we request from OnionOO?
+# How many rows should we request from Onionoo?
 # We ask Onionoo to exclude the slowest and most recent relays.
 # None means "all relays".
 # Set env TOR_FB_ONIONOO_LIMIT="None" to request all relays.
@@ -256,7 +256,7 @@ PERMITTED_BADEXIT = getenv_conf('TOR_FB_PERMITTED_BADEXIT',
 AGE_ALPHA = getenv_conf('TOR_FB_AGE_ALPHA',
                         .99, float)
 
-# this factor is used to scale OnionOO entries to [0,1]
+# this factor is used to scale Onionoo entries to [0,1]
 # it's not configurable, because it's unlikely to change
 ONIONOO_SCALE_ONE = 999.
 
@@ -409,7 +409,7 @@ def cleanse_c_string(raw_string):
   # But this typically only results in changes to the string data
   return cleansed_string
 
-## OnionOO Source Functions
+## Onionoo Source Functions
 
 # a dictionary of source metadata for each onionoo query we've made
 fetch_source = {}
@@ -499,7 +499,7 @@ def load_json_from_file(json_file_name):
                      error.strerror)
                     )
 
-## OnionOO Functions
+## Onionoo Functions
 
 def datestr_to_datetime(datestr):
   # Parse datetimes like: Fri, 02 Oct 2015 13:34:14 GMT
@@ -565,7 +565,7 @@ def onionoo_fetch(what, **kwargs):
     required_freshness = required_freshness.replace(tzinfo=None)
     required_freshness -= datetime.timedelta(hours=24)
 
-    # Make the OnionOO request
+    # Make the Onionoo request
     response_code = 0
     try:
       response = urllib2.urlopen(request)
@@ -2457,7 +2457,7 @@ def list_fallbacks(whitelist, exact=False):
   else:
     print '/* No Fallbacks met criteria */'
 
-  # output C comments specifying the OnionOO data used to create the list
+  # output C comments specifying the Onionoo data used to create the list
   for s in fetch_source_list():
     print describe_fetch_source(s)
 
