@@ -3,11 +3,10 @@
 # Usage:
 #
 # Regenerate the list:
-# $ TOR_FB_MODE=""
 # $ TOR_FB_DATE=`date -u "+%Y-%m-%d-%H-%M-%S"`
 # $ TOR_FB_COUNTRY=ZZ
 # $ TOR_FB_COMMIT=`git rev-parse --short=16 HEAD`
-# $ ./updateFallbackDirs.py $TOR_FB_MODE \
+# $ ./updateFallbackDirs.py \
 #     > fallback_dirs_"$TOR_FB_DATE"_"$TOR_FB_COUNTRY"_"$TOR_FB_COMMIT".inc \
 #     2> fallback_dirs_"$TOR_FB_DATE"_"$TOR_FB_COUNTRY"_"$TOR_FB_COMMIT".log
 # $ cp fallback_dirs_*.inc ../tor/src/app/config/fallback_dirs.inc
@@ -104,6 +103,13 @@ def opt(type_fn):
 FALLBACK_FORMAT_VERSION = '2.0.0'
 SECTION_SEPARATOR_BASE = '====='
 SECTION_SEPARATOR_COMMENT = '/* ' + SECTION_SEPARATOR_BASE + ' */'
+
+## Mode Settings
+
+# Use "check_existing" to check existing fallbacks, or anything else to create
+# a new list. Overridden by the command-line argument "check_existing".
+MODE = getenv_conf('TOR_FB_MODE',
+                   '', str)
 
 # Output all candidate fallbacks, or only output selected fallbacks?
 OUTPUT_CANDIDATES = getenv_conf('TOR_FB_OUTPUT_CANDIDATES',
@@ -2324,7 +2330,7 @@ def get_command():
   if len(sys.argv) == 2:
     return sys.argv[1]
   else:
-    return None
+    return MODE
 
 def log_excluded(msg, *args):
   if get_command() == 'check_existing':
