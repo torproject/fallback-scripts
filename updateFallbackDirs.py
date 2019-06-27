@@ -33,21 +33,20 @@
 # https://trac.torproject.org/projects/tor/attachment/ticket/8374/dir_list.2.py
 # Modifications by teor, 2015
 
-import StringIO
-import string
-import re
+import copy
 import datetime
+import dateutil.parser
 import gzip
-import os.path
+import hashlib
 import json
 import math
+import os.path
+import re
+import string
+import StringIO
 import sys
 import urllib
 import urllib2
-import hashlib
-import dateutil.parser
-import copy
-import re
 
 from stem.descriptor import DocumentHandler
 from stem.descriptor.remote import get_consensus, get_server_descriptors, MAX_FINGERPRINTS
