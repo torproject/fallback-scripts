@@ -3,18 +3,21 @@
 # Usage:
 #
 # Regenerate the list:
-# $ FB_MODE=""
-# $ FB_DATE=`date -u "+%Y-%m-%d-%H-%M-%S"`
-# $ FB_COUNTRY=ZZ
-# $ FB_COMMIT=`git rev-parse --short=16 HEAD`
-# $ ./updateFallbackDirs.py $FB_MODE \
-#     > fallback_dirs_"$FB_DATE"_"$FB_COUNTRY"_"$FB_COMMIT".inc \
-#     2> fallback_dirs_"$FB_DATE"_"$FB_COUNTRY"_"$FB_COMMIT".log
+# $ TOR_FB_MODE=""
+# $ TOR_FB_DATE=`date -u "+%Y-%m-%d-%H-%M-%S"`
+# $ TOR_FB_COUNTRY=ZZ
+# $ TOR_FB_COMMIT=`git rev-parse --short=16 HEAD`
+# $ ./updateFallbackDirs.py $TOR_FB_MODE \
+#     > fallback_dirs_"$TOR_FB_DATE"_"$TOR_FB_COUNTRY"_"$TOR_FB_COMMIT".inc \
+#     2> fallback_dirs_"$TOR_FB_DATE"_"$TOR_FB_COUNTRY"_"$TOR_FB_COMMIT".log
 # $ cp fallback_dirs_*.inc ../tor/src/app/config/fallback_dirs.inc
 #
 # Check the existing list:
-# $ FB_MODE="check_existing"
+# $ TOR_FB_MODE="check_existing"
 # Then use the commands above.
+#
+# Most script variables can be overridden using TOR_FB_* environmental
+# variables.
 #
 # This script should be run from a stable, reliable network connection,
 # with no other network activity (and not over tor).
@@ -40,6 +43,7 @@ import gzip
 import hashlib
 import json
 import math
+import os
 import os.path
 import re
 import string
@@ -70,6 +74,24 @@ except ImportError:
 
 ## Top-Level Configuration
 
+def getenv_conf(var_name, default_val, type_fn):
+  """Get var_name from the environment, using default_val if it is unset.
+     Cast the result using type_fn."""
+  return type_fn(os.getenv(var_name, default_val))
+
+def opt(type_fn):
+  """Higher-order function, which returns a function that converts a value
+     using type_fn, but returns None if the conversion fails."""
+  def opt_type_fn(var_value):
+    """Converts its argument var_value using the type_fn passed to the outer
+       function, and returns the result.
+       If the conversion fails, returns None."""
+    try:
+      return type_fn(var_value)
+    except TypeError:
+      return None
+  return opt_type_fn
+
 # We use semantic versioning: https://semver.org
 # In particular:
 # * major changes include removing a mandatory field, or anything else that
@@ -77,32 +99,38 @@ except ImportError:
 # * minor changes include adding a field,
 # * patch changes include changing header comments or other unstructured
 #   content
+# These variables are not configureable, because format changes need a spec
+# and code update.
 FALLBACK_FORMAT_VERSION = '2.0.0'
 SECTION_SEPARATOR_BASE = '====='
 SECTION_SEPARATOR_COMMENT = '/* ' + SECTION_SEPARATOR_BASE + ' */'
 
 # Output all candidate fallbacks, or only output selected fallbacks?
-OUTPUT_CANDIDATES = False
+OUTPUT_CANDIDATES = getenv_conf('TOR_FB_OUTPUT_CANDIDATES',
+                                False, bool)
 
 # Perform DirPort checks over IPv4?
 # Change this to False if IPv4 doesn't work for you, or if you don't want to
 # download a consensus for each fallback
 # Don't check ~1000 candidates when OUTPUT_CANDIDATES is True
-PERFORM_IPV4_DIRPORT_CHECKS = False if OUTPUT_CANDIDATES else True
+PERFORM_IPV4_DIRPORT_CHECKS = getenv_conf('TOR_FB_PERFORM_IPV4_DIRPORT_CHECKS',
+                                          not OUTPUT_CANDIDATES, bool)
 
 # Perform DirPort checks over IPv6?
-# If you know IPv6 works for you, set this to True
-# This will exclude IPv6 relays without an IPv6 DirPort configured
-# So it's best left at False until #18394 is implemented
-# Don't check ~1000 candidates when OUTPUT_CANDIDATES is True
-PERFORM_IPV6_DIRPORT_CHECKS = False if OUTPUT_CANDIDATES else False
+# There are no IPv6 DirPorts in the Tor protocol, so we disable this option by
+# default. When #18394 is implemented, we'll be able to check IPv6 ORPorts.
+PERFORM_IPV6_DIRPORT_CHECKS = getenv_conf('TOR_FB_PERFORM_IPV6_DIRPORT_CHECKS',
+                                          False, bool)
 
 # Must relays be running now?
-MUST_BE_RUNNING_NOW = (PERFORM_IPV4_DIRPORT_CHECKS
-                       or PERFORM_IPV6_DIRPORT_CHECKS)
+MUST_BE_RUNNING_NOW = getenv_conf('TOR_FB_MUST_BE_RUNNING_NOW',
+                                  (PERFORM_IPV4_DIRPORT_CHECKS
+                                   or PERFORM_IPV6_DIRPORT_CHECKS), bool)
 
 # Clients have been using microdesc consensuses by default for a while now
-DOWNLOAD_MICRODESC_CONSENSUS = True
+DOWNLOAD_MICRODESC_CONSENSUS = (
+  getenv_conf('TOR_FB_DOWNLOAD_MICRODESC_CONSENSUS',
+              True, bool))
 
 # If a relay delivers an invalid consensus, if it will become valid less than
 # this many seconds in the future, or expired less than this many seconds ago,
@@ -126,44 +154,56 @@ DOWNLOAD_MICRODESC_CONSENSUS = True
 # Clients on 0.3.5.5-alpha? and earlier also won't select guards from
 # consensuses that have expired, but can bootstrap if they already have guards
 # in their state file.
-REASONABLY_LIVE_TIME = 24*60*60
+REASONABLY_LIVE_TIME = getenv_conf('TOR_FB_REASONABLY_LIVE_TIME',
+                                   24*60*60, int)
 
 # Output fallback name, flags, bandwidth, and ContactInfo in a C comment?
-OUTPUT_COMMENTS = True if OUTPUT_CANDIDATES else False
+OUTPUT_COMMENTS = getenv_conf('TOR_FB_OUTPUT_COMMENTS',
+                              OUTPUT_CANDIDATES, bool)
 
 # Output matching ContactInfo in fallbacks list?
 # Useful if you're trying to contact operators
-CONTACT_COUNT = True if OUTPUT_CANDIDATES else False
+CONTACT_COUNT = getenv_conf('TOR_FB_CONTACT_COUNT',
+                              OUTPUT_CANDIDATES, bool)
 
 # How the list should be sorted:
 # fingerprint: is useful for stable diffs of fallback lists
 # measured_bandwidth: is useful when pruning the list based on bandwidth
 # contact: is useful for contacting operators once the list has been pruned
-OUTPUT_SORT_FIELD = 'contact' if OUTPUT_CANDIDATES else 'fingerprint'
+OUTPUT_SORT_FIELD = getenv_conf('TOR_FB_OUTPUT_SORT_FIELD',
+                                ('contact' if OUTPUT_CANDIDATES
+                                 else 'fingerprint'), str)
 
 ## OnionOO Settings
 
-ONIONOO = 'https://onionoo.torproject.org/'
+ONIONOO = getenv_conf('TOR_FB_ONIONOO',
+                      'https://onionoo.torproject.org/', str)
 #ONIONOO = 'https://onionoo.thecthulhu.com/'
 
 # Don't bother going out to the Internet, just use the files available locally,
 # even if they're very old
-LOCAL_FILES_ONLY = False
+LOCAL_FILES_ONLY = getenv_conf('TOR_FB_LOCAL_FILES_ONLY',
+                               False, bool)
 
-## Whitelist / Blacklist Filter Settings
+## Whitelist Filter Settings
 
-# The whitelist contains entries that are included if all attributes match
-# (IPv4, dirport, orport, id, and optionally IPv6 and IPv6 orport)
+# The whitelist contains entries that are included if one of the unique
+# attributes matches (IPv4, id, or IPv6 (optional))
 
 # What happens to entries not in whitelist?
 # When True, they are included, when False, they are excluded
-INCLUDE_UNLISTED_ENTRIES = True if OUTPUT_CANDIDATES else False
+INCLUDE_UNLISTED_ENTRIES = getenv_conf('TOR_FB_INCLUDE_UNLISTED_ENTRIES',
+                                       OUTPUT_CANDIDATES, bool)
 
-WHITELIST_FILE_NAME = 'fallback.whitelist'
-FALLBACK_FILE_NAME  = '../tor/src/app/config/fallback_dirs.inc'
+WHITELIST_FILE_NAME = getenv_conf('TOR_FB_WHITELIST_FILE_NAME',
+                                  'fallback.whitelist', str)
+FALLBACK_FILE_NAME = (
+  getenv_conf('TOR_FB_FALLBACK_FILE_NAME',
+              '../tor/src/app/config/fallback_dirs.inc', str))
 
-# The number of bytes we'll read from a filter file before giving up
-MAX_LIST_FILE_SIZE = 1024 * 1024
+# The number of bytes we'll read from the whitelist file before giving up
+MAX_LIST_FILE_SIZE = getenv_conf('TOR_FB_MAX_LIST_FILE_SIZE',
+                                 1024 * 1024, int)
 
 ## Eligibility Settings
 
@@ -172,28 +212,39 @@ MAX_LIST_FILE_SIZE = 1024 * 1024
 # meant that we had to rebuild the list more often. We want fallbacks to be
 # stable for 2 years, so we set it to a few months.
 #
-# If a relay changes address or port, that's it, it's not useful any more,
-# because clients can't find it
-ADDRESS_AND_PORT_STABLE_DAYS = 90
+# If a relay changes address or port, it's not useful any more,
+# because clients with the old hard-coded address and port can't find it
+ADDRESS_AND_PORT_STABLE_DAYS = (
+  getenv_conf('TOR_FB_ADDRESS_AND_PORT_STABLE_DAYS',
+              90, int))
 # We ignore relays that have been down for more than this period
-MAX_DOWNTIME_DAYS = 0 if MUST_BE_RUNNING_NOW else 7
+MAX_DOWNTIME_DAYS = getenv_conf('TOR_FB_MAX_DOWNTIME_DAYS',
+                                0 if MUST_BE_RUNNING_NOW else 7, int)
 # FallbackDirs must have a time-weighted-fraction that is greater than or
 # equal to:
 # Mirrors that are down half the time are still useful half the time
-CUTOFF_RUNNING = .50
-CUTOFF_V2DIR = .50
+# (But we need 75% of the list to be up on average, or we start getting
+# fallback warnings from DocTor.)
+CUTOFF_RUNNING = getenv_conf('TOR_FB_CUTOFF_RUNNING',
+                             .50, float)
+CUTOFF_V2DIR = getenv_conf('TOR_FB_CUTOFF_V2DIR',
+                           .50, float)
 # Guard flags are removed for some time after a relay restarts, so we ignore
 # the guard flag.
-CUTOFF_GUARD = .00
+CUTOFF_GUARD = getenv_conf('TOR_FB_CUTOFF_GUARD',
+                           .00, float)
 # FallbackDirs must have a time-weighted-fraction that is less than or equal
 # to:
 # .00 means no bad exits
-PERMITTED_BADEXIT = .00
+PERMITTED_BADEXIT = getenv_conf('TOR_FB_PERMITTED_BADEXIT',
+                                .00, float)
 
 # older entries' weights are adjusted with ALPHA^(age in days)
-AGE_ALPHA = 0.99
+AGE_ALPHA = getenv_conf('TOR_FB_AGE_ALPHA',
+                        .99, float)
 
 # this factor is used to scale OnionOO entries to [0,1]
+# it's not configurable, because it's unlikely to change
 ONIONOO_SCALE_ONE = 999.
 
 ## Fallback Count Limits
@@ -201,12 +252,23 @@ ONIONOO_SCALE_ONE = 999.
 # The target for these parameters is 20% of the guards in the network
 # This is around 200 as of October 2015
 _FB_POG = 0.2
-FALLBACK_PROPORTION_OF_GUARDS = None if OUTPUT_CANDIDATES else _FB_POG
+# None means no limit on the number of fallbacks.
+# Set env TOR_FB_FALLBACK_PROPORTION_OF_GUARDS="None" to have no limit.
+FALLBACK_PROPORTION_OF_GUARDS = (
+  getenv_conf('TOR_FB_FALLBACK_PROPORTION_OF_GUARDS',
+              None if OUTPUT_CANDIDATES else _FB_POG, opt(float)))
 
 # Limit the number of fallbacks (eliminating lowest by advertised bandwidth)
-MAX_FALLBACK_COUNT = None if OUTPUT_CANDIDATES else 200
+# None means no limit on the number of fallbacks.
+# Set env TOR_FB_MAX_FALLBACK_COUNT="None" to have no limit.
+MAX_FALLBACK_COUNT = (
+  getenv_conf('TOR_FB_MAX_FALLBACK_COUNT',
+              None if OUTPUT_CANDIDATES else 200, opt(int)))
 # Emit a C #error if the number of fallbacks is less than expected
-MIN_FALLBACK_COUNT = 0 if OUTPUT_CANDIDATES else MAX_FALLBACK_COUNT*0.5
+# Set to 0 to have no minimum.
+MIN_FALLBACK_COUNT = (
+  getenv_conf('TOR_FB_MIN_FALLBACK_COUNT',
+              0 if OUTPUT_CANDIDATES else MAX_FALLBACK_COUNT*0.5, int))
 
 # The maximum number of fallbacks on the same address, contact, or family
 #
@@ -217,11 +279,16 @@ MIN_FALLBACK_COUNT = 0 if OUTPUT_CANDIDATES else MAX_FALLBACK_COUNT*0.5
 #
 # We also don't want too much of the list to go down if a single operator
 # has to move all their relays.
-MAX_FALLBACKS_PER_IP = 1
-MAX_FALLBACKS_PER_IPV4 = MAX_FALLBACKS_PER_IP
-MAX_FALLBACKS_PER_IPV6 = MAX_FALLBACKS_PER_IP
-MAX_FALLBACKS_PER_CONTACT = 7
-MAX_FALLBACKS_PER_FAMILY = 7
+MAX_FALLBACKS_PER_IP = getenv_conf('TOR_FB_MAX_FALLBACKS_PER_IP',
+                                   1, int)
+MAX_FALLBACKS_PER_IPV4 = getenv_conf('TOR_FB_MAX_FALLBACKS_PER_IPV4',
+                                     MAX_FALLBACKS_PER_IP, int)
+MAX_FALLBACKS_PER_IPV6 = getenv_conf('TOR_FB_MAX_FALLBACKS_PER_IPV6',
+                                     MAX_FALLBACKS_PER_IP, int)
+MAX_FALLBACKS_PER_FAMILY = getenv_conf('TOR_FB_MAX_FALLBACKS_PER_FAMILY',
+                                        7, int)
+MAX_FALLBACKS_PER_CONTACT = getenv_conf('TOR_FB_MAX_FALLBACKS_PER_CONTACT',
+                                        MAX_FALLBACKS_PER_FAMILY, int)
 
 ## Fallback Bandwidth Requirements
 
@@ -229,7 +296,8 @@ MAX_FALLBACKS_PER_FAMILY = 7
 # to make sure we aren't further overloading exits
 # (Set to 1.0, because we asked that only lightly loaded exits opt-in,
 # and the extra load really isn't that much for large relays.)
-EXIT_BANDWIDTH_FRACTION = 1.0
+EXIT_BANDWIDTH_FRACTION = getenv_conf('TOR_FB_EXIT_BANDWIDTH_FRACTION',
+                                      1.0, float)
 
 # If a single fallback's bandwidth is too low, it's pointless adding it
 # We expect fallbacks to handle an extra 10 kilobytes per second of traffic
@@ -237,17 +305,22 @@ EXIT_BANDWIDTH_FRACTION = 1.0
 #
 # We convert this to a consensus weight before applying the filter,
 # because all the bandwidth amounts are specified by the relay
-MIN_BANDWIDTH = 50.0 * 10.0 * 1024.0
+MIN_BANDWIDTH = getenv_conf('TOR_FB_MIN_BANDWIDTH',
+                            50.0 * 10.0 * 1024.0, float)
 
-# Clients will time out after 30 seconds trying to download a consensus
+# Clients will time out (or users will give up) after 30 seconds trying to
+# download a consensus
 # So allow fallback directories half that to deliver a consensus
 # The exact download times might change based on the network connection
 # running this script, but only by a few seconds
 # There is also about a second of python overhead
-CONSENSUS_DOWNLOAD_SPEED_MAX = 15.0
+CONSENSUS_DOWNLOAD_SPEED_MAX = (
+  getenv_conf('TOR_FB_CONSENSUS_DOWNLOAD_SPEED_MAX',
+              15.0, float))
 # If the relay fails a consensus check, retry the download
 # This avoids delisting a relay due to transient network conditions
-CONSENSUS_DOWNLOAD_RETRY = True
+CONSENSUS_DOWNLOAD_RETRY = getenv_conf('TOR_FB_CONSENSUS_DOWNLOAD_RETRY',
+                                       True, bool)
 
 ## Parsing Functions
 
