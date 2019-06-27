@@ -186,6 +186,13 @@ ONIONOO = getenv_conf('TOR_FB_ONIONOO',
                       'https://onionoo.torproject.org/', str)
 #ONIONOO = 'https://onionoo.thecthulhu.com/'
 
+# How many rows should we request from OnionOO?
+# We ask Onionoo to exclude the slowest and most recent relays.
+# None means "all relays".
+# Set env TOR_FB_ONIONOO_LIMIT="None" to request all relays.
+ONIONOO_LIMIT = getenv_conf('TOR_FB_ONIONOO_LIMIT',
+                            None, opt(int))
+
 # Don't bother going out to the Internet, just use the files available locally,
 # even if they're very old
 LOCAL_FILES_ONLY = getenv_conf('TOR_FB_LOCAL_FILES_ONLY',
@@ -508,10 +515,15 @@ def datestr_to_datetime(datestr):
 def onionoo_fetch(what, **kwargs):
   params = kwargs
   params['type'] = 'relay'
-  #params['limit'] = 10
+  if ONIONOO_LIMIT is not None:
+    params['limit'] = str(ONIONOO_LIMIT)
   params['first_seen_days'] = '%d-'%(ADDRESS_AND_PORT_STABLE_DAYS)
   params['last_seen_days'] = '-%d'%(MAX_DOWNTIME_DAYS)
   params['flag'] = 'V2Dir'
+  # Get the relays with the highest consensus weight first,
+  # then use first_seen to get a stable order.
+  # The order is important when we're limiting the number of relays returned.
+  params['order'] = '-consensus_weight,first_seen'
   url = ONIONOO + what + '?' + urllib.urlencode(params)
 
   # Unfortunately, the URL is too long for some OS filenames,
