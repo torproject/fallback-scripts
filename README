@@ -1,10 +1,20 @@
 The Tor Fallback Scripts are used to generate the hard-coded fallback
-directory mirror lists for Tor. Tor uses fallback directory mirrors when it
-is first installed, to find the rest of the Tor network. It also uses them
-when its cached directory documents are very old.
+directory mirror lists for Tor.
 
-(Tor protects your privacy on the internet by hiding the connection between
-your Internet address and the services you use.)
+Who needs to run these scripts?
+
+You probably don't need to run these scripts. They are used by the Tor
+maintainers to produce the tor/src/app/config/fallback_dirs.inc list.
+You might want to use them if you are maintaining your own Tor network,
+or doing research on Tor. But small Tor networks should run fine without
+fallbacks.
+
+What are Fallback Directory Mirrors?
+
+Tor protects your privacy on the internet by hiding the connection between
+your Internet address and the services you use. Tor uses fallback directory
+mirrors when it is first installed, to find the rest of the Tor network. It
+also uses them when its cached directory documents are very old.
 
 To generate a fallback list using the current whitelist:
         ./updateFallbackDirs.py
