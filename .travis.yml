@@ -1,0 +1,115 @@
+language: python
+
+# The default python version on Travis is 2.7
+# But we add this line to show the python version in the Travis UI
+python: "2.7"
+
+os:
+  - linux
+  ## We also run a single macOS job with python 2.7
+
+matrix:
+  # include creates Linux, python 2.7 builds by default
+  # the key(s) in each item override these defaults
+  include:
+    ## macOS on Travis is tricky:
+    ##   - We use the default python version on macOS, which is currently 2.7.
+    ##     (But we don't show the version, because Travis might change it
+    ##     without us noticing.)
+    ##   - We use language: c, because language: python fails on Travis macOS.
+    - os: osx
+      language: c
+      python:
+
+    ## Test all supported python releases
+    ## Pre-installed in Travis xenial:
+    ## https://docs.travis-ci.com/user/reference/xenial/#python-support
+    ## End of Life: 1 January 2020
+    ## https://www.python.org/dev/peps/pep-0373/#id2
+    - python: "2.7"
+
+    ### TODO: the fallback scripts don't work with python 3 yet ###
+    ## End of Life: December 2021
+    ## https://www.python.org/dev/peps/pep-0494/#lifespan
+    #- python: "3.6"
+    ## End of Life: June 2023
+    ## https://www.python.org/dev/peps/pep-0537/#lifespan
+    #- python: "3.7"
+    ## Stable: 20 October 2019
+    ## (Switch from 3.8-dev to 3.8, and check for 3.9-dev)
+    ## End of Life: October 2024
+    ## https://www.python.org/dev/peps/pep-0569/#lifespan
+    #- python: "3.8-dev"
+    ## Nightly python
+    #- python: "nightly"
+    # PyPy versions
+    ## End of Life: "forever"
+    ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
+    ## But stem may decide not to support python 2 after 1 Jan 2020.
+    ## Travis Xenial does not support pypy2.7
+    #- python: "pypy2.7"
+    ## PyPy does not have documented end of life dates
+    #- python: "pypy3.5"
+    ## PyPy 3.6 is currently in alpha
+    ## Travis Xenial does not support pypy3.6-dev yet?
+    #- python: "pypy3.6-dev"
+
+  ## Uncomment to allow the build to report success (with non-required
+  ## sub-builds continuing to run) if all required sub-builds have
+  ## succeeded.  This is somewhat buggy currently: it can cause
+  ## duplicate notifications and prematurely report success if a
+  ## single sub-build has succeeded.  See
+  ## https://github.com/travis-ci/travis-ci/issues/1696
+  #fast_finish: true
+
+  ## These builds fail in Travis at the moment
+  #allow_failures:
+  #  - python: "3.7"
+
+## (Linux only) Use the Ubuntu Xenial Linux Image
+## deb.torproject.org doesn't support Trusty any more
+dist: xenial
+
+## (OSX only) Use the default OSX image
+## See https://docs.travis-ci.com/user/reference/osx#os-x-version
+## Default is Xcode 9.4 on macOS 10.13 as of August 2018
+#osx_image: xcode9.4
+
+install:
+  ## We also need to install stem's dependencies
+  - pip install -U pip
+  - pip install -r requirements.txt
+  ## List installed package versions
+  - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
+  - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
+  - pip list
+  - python --version
+
+script:
+  ## Run some fallback-scripts tests
+  ## moria1, Serge, no caches extra info, no dir port, doesn't exist
+  ## TODO: validate output from all 3 commands using grep, grep, and stem?
+  - ./generateFallbackDirLine.py 9695DFC35FFEB861329B9F1AB04C46397020CE31 BA44A889E64B93FAA2B114E02C2A279A8555C533 001524DD403D729F08F7E5D77813EF12756CFA8D 5AFAC3D00E97D6733112CC9CA2A788691FA87125 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  - ./lookupFallbackDirContact.py 9695DFC35FFEB861329B9F1AB04C46397020CE31 BA44A889E64B93FAA2B114E02C2A279A8555C533 001524DD403D729F08F7E5D77813EF12756CFA8D 5AFAC3D00E97D6733112CC9CA2A788691FA87125 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  ## If we get the top 200 relays from Onionoo, we generate a list with about
+  ## 10 fallbacks
+  - export TOR_FB_ONIONOO_LIMIT=200
+  ## Hide info-level logs
+  - ./updateFallbackDirs.py 2>&1 | tee -a fallback.log | grep -v "INFO::"
+
+after_failure:
+  ## Show all the output, including info-level logs
+  - cat fallback.log || echo "cat failed"
+
+notifications:
+  irc:
+    channels:
+      - "irc.oftc.net#tor-ci"
+    template:
+      - "%{repository} %{branch} %{commit} - %{author}: %{commit_subject}"
+      - "Build #%{build_number} %{result}. Details: %{build_url}"
+    on_success: change
+    on_failure: change
+  email:
+    on_success: never
+    on_failure: change
