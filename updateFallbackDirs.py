@@ -75,20 +75,40 @@ except ImportError:
 
 def getenv_conf(var_name, default_val, type_fn):
   """Get var_name from the environment, using default_val if it is unset.
-     Cast the result using type_fn."""
-  return type_fn(os.getenv(var_name, default_val))
+     Cast the result using type_fn. If conversion fails, log an error and
+     exit."""
+  try:
+    return type_fn(os.getenv(var_name, default_val))
+  except ValueError as e:
+    # Log a useful message if conversion fails
+    logging.error('Could not cast env var "{}" using function "{}" and default "{}". ValueError: "{}"'.format(var_name, type_fn, default_val, e))
+    sys.exit(1)
 
 def opt(type_fn):
   """Higher-order function, which returns a function that converts a value
-     using type_fn, but returns None if the conversion fails."""
-  def opt_type_fn(var_value):
+     using type_fn. The returned function handles some conversion failures.
+     See its description for details."""
+  def opt_type_fn(var_value, default_val=None, var_name=None):
     """Converts its argument var_value using the type_fn passed to the outer
        function, and returns the result.
-       If the conversion fails, returns None."""
+       If conversion fails, and var_value is None or the empty string, returns
+       None.
+       If conversion fails for any other values, throws a ValueError
+       exception, with an error string containing var_name, if present."""
     try:
       return type_fn(var_value)
+    # Make type_fn(None) always return None for types that don't cast None
     except TypeError:
       return None
+    except ValueError as e:
+      # Make type_fn('') and type_fn(None) silently return None
+      if var_value == '' or var_value is None:
+        return None
+      else:
+        # Log a useful message if conversion fails, and throw the error to
+        # getenv_conf()
+        logging.error('Could not cast optional env var value "{}" using function "{}". ValueError: "{}"'.format(var_value, type_fn, e))
+        raise e
   return opt_type_fn
 
 # We use semantic versioning: https://semver.org
