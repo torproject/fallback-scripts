@@ -73,12 +73,25 @@ except ImportError:
 
 ## Top-Level Configuration
 
-def getenv_conf(var_name, default_val, type_fn):
+def getenv_conf(var_name, default_val, type_fn, optional=False):
   """Get var_name from the environment, using default_val if it is unset.
      Cast the result using type_fn. If conversion fails, log an error and
-     exit."""
+     exit.
+     type_fn must not be bool. Instead, use custom_bool, which correctly
+     handles empty env vars and defaults, and bad values."""
   try:
-    return type_fn(os.getenv(var_name, default_val))
+    original_type_fn = type_fn
+    # Use our custom bool function instead
+    assert type_fn != bool
+    # Make the type function optional
+    if optional:
+      type_fn = opt(type_fn)
+    # Look up and convert the value
+    if original_type_fn == custom_bool:
+      # custom_bool does its own default handling
+      return type_fn(os.getenv(var_name), default_val, var_name)
+    else:
+      return type_fn(os.getenv(var_name, default_val))
   except ValueError as e:
     # Log a useful message if conversion fails
     logging.error('Could not cast env var "{}" using function "{}" and default "{}". ValueError: "{}"'.format(var_name, type_fn, default_val, e))
@@ -94,9 +107,15 @@ def opt(type_fn):
        If conversion fails, and var_value is None or the empty string, returns
        None.
        If conversion fails for any other values, throws a ValueError
-       exception, with an error string containing var_name, if present."""
+       exception, with an error string containing var_name, if present.
+       Performs special handling for bool conversion using custom_bool()."""
     try:
-      return type_fn(var_value)
+      if type_fn == custom_bool:
+        assert default_val is not None
+        assert var_name is not None
+        return custom_bool(var_value, default_val, var_name)
+      else:
+        return type_fn(var_value)
     # Make type_fn(None) always return None for types that don't cast None
     except TypeError:
       return None
@@ -110,6 +129,32 @@ def opt(type_fn):
         logging.error('Could not cast optional env var value "{}" using function "{}". ValueError: "{}"'.format(var_value, type_fn, e))
         raise e
   return opt_type_fn
+
+# Permitted True and False values for custom_bool(). Must be lowercase.
+CUSTOM_BOOL_TRUE = ['true', 'yes', '1']
+CUSTOM_BOOL_FALSE = ['false', 'no', '0']
+
+def custom_bool(raw_var_value, default_val, var_name=None):
+  """Custom bool conversion function.
+     If raw_var_value is None, returns default_val.
+     If raw_var_value is the empty string, returns not default_val,
+     Otherwise, checks CUSTOM_BOOL_TRUE and CUSTOM_BOOL_FALSE for
+     raw_var_value, returning True or False respectively.
+     Any other raw_var_value throws a ValueError.
+     If var_name is not None, it is included in the ValueError string."""
+  if raw_var_value is None:
+    return default_val
+  elif raw_var_value == '':
+    return not default_val
+  elif str.lower(raw_var_value) in CUSTOM_BOOL_TRUE:
+    return True
+  elif str.lower(raw_var_value) in CUSTOM_BOOL_FALSE:
+    return False
+  else:
+    error_str = "invalid literal for custom_bool(): '{}', default_val: '{}'".format(raw_var_value, default_val)
+    if var_name is not None:
+      error_str += ", var_name: '{}'".format(var_name)
+    raise ValueError(error_str)
 
 # We use semantic versioning: https://semver.org
 # In particular:
@@ -133,30 +178,30 @@ MODE = getenv_conf('TOR_FB_MODE',
 
 # Output all candidate fallbacks, or only output selected fallbacks?
 OUTPUT_CANDIDATES = getenv_conf('TOR_FB_OUTPUT_CANDIDATES',
-                                False, bool)
+                                False, custom_bool)
 
 # Perform DirPort checks over IPv4?
 # Change this to False if IPv4 doesn't work for you, or if you don't want to
 # download a consensus for each fallback
 # Don't check ~1000 candidates when OUTPUT_CANDIDATES is True
 PERFORM_IPV4_DIRPORT_CHECKS = getenv_conf('TOR_FB_PERFORM_IPV4_DIRPORT_CHECKS',
-                                          not OUTPUT_CANDIDATES, bool)
+                                          not OUTPUT_CANDIDATES, custom_bool)
 
 # Perform DirPort checks over IPv6?
 # There are no IPv6 DirPorts in the Tor protocol, so we disable this option by
 # default. When #18394 is implemented, we'll be able to check IPv6 ORPorts.
 PERFORM_IPV6_DIRPORT_CHECKS = getenv_conf('TOR_FB_PERFORM_IPV6_DIRPORT_CHECKS',
-                                          False, bool)
+                                          False, custom_bool)
 
 # Must relays be running now?
 MUST_BE_RUNNING_NOW = getenv_conf('TOR_FB_MUST_BE_RUNNING_NOW',
                                   (PERFORM_IPV4_DIRPORT_CHECKS
-                                   or PERFORM_IPV6_DIRPORT_CHECKS), bool)
+                                   or PERFORM_IPV6_DIRPORT_CHECKS), custom_bool)
 
 # Clients have been using microdesc consensuses by default for a while now
 DOWNLOAD_MICRODESC_CONSENSUS = (
   getenv_conf('TOR_FB_DOWNLOAD_MICRODESC_CONSENSUS',
-              True, bool))
+              True, custom_bool))
 
 # If a relay delivers an invalid consensus, if it will become valid less than
 # this many seconds in the future, or expired less than this many seconds ago,
@@ -185,12 +230,12 @@ REASONABLY_LIVE_TIME = getenv_conf('TOR_FB_REASONABLY_LIVE_TIME',
 
 # Output fallback name, flags, bandwidth, and ContactInfo in a C comment?
 OUTPUT_COMMENTS = getenv_conf('TOR_FB_OUTPUT_COMMENTS',
-                              OUTPUT_CANDIDATES, bool)
+                              OUTPUT_CANDIDATES, custom_bool)
 
 # Output matching ContactInfo in fallbacks list?
 # Useful if you're trying to contact operators
 CONTACT_COUNT = getenv_conf('TOR_FB_CONTACT_COUNT',
-                              OUTPUT_CANDIDATES, bool)
+                              OUTPUT_CANDIDATES, custom_bool)
 
 # How the list should be sorted:
 # fingerprint: is useful for stable diffs of fallback lists
@@ -211,12 +256,12 @@ ONIONOO = getenv_conf('TOR_FB_ONIONOO',
 # None means "all relays".
 # Set env TOR_FB_ONIONOO_LIMIT="None" to request all relays.
 ONIONOO_LIMIT = getenv_conf('TOR_FB_ONIONOO_LIMIT',
-                            None, opt(int))
+                            None, int, optional=True)
 
 # Don't bother going out to the Internet, just use the files available locally,
 # even if they're very old
 LOCAL_FILES_ONLY = getenv_conf('TOR_FB_LOCAL_FILES_ONLY',
-                               False, bool)
+                               False, custom_bool)
 
 ## Whitelist Filter Settings
 
@@ -226,7 +271,7 @@ LOCAL_FILES_ONLY = getenv_conf('TOR_FB_LOCAL_FILES_ONLY',
 # What happens to entries not in whitelist?
 # When True, they are included, when False, they are excluded
 INCLUDE_UNLISTED_ENTRIES = getenv_conf('TOR_FB_INCLUDE_UNLISTED_ENTRIES',
-                                       OUTPUT_CANDIDATES, bool)
+                                       OUTPUT_CANDIDATES, custom_bool)
 
 WHITELIST_FILE_NAME = getenv_conf('TOR_FB_WHITELIST_FILE_NAME',
                                   'fallback.whitelist', str)
@@ -289,14 +334,14 @@ _FB_POG = 0.2
 # Set env TOR_FB_FALLBACK_PROPORTION_OF_GUARDS="None" to have no limit.
 FALLBACK_PROPORTION_OF_GUARDS = (
   getenv_conf('TOR_FB_FALLBACK_PROPORTION_OF_GUARDS',
-              None if OUTPUT_CANDIDATES else _FB_POG, opt(float)))
+              None if OUTPUT_CANDIDATES else _FB_POG, float, optional=True))
 
 # Limit the number of fallbacks (eliminating lowest by advertised bandwidth)
 # None means no limit on the number of fallbacks.
 # Set env TOR_FB_MAX_FALLBACK_COUNT="None" to have no limit.
 MAX_FALLBACK_COUNT = (
   getenv_conf('TOR_FB_MAX_FALLBACK_COUNT',
-              None if OUTPUT_CANDIDATES else 200, opt(int)))
+              None if OUTPUT_CANDIDATES else 200, int, optional=True))
 # Emit a C #error if the number of fallbacks is less than expected
 # Set to 0 to have no minimum.
 MIN_FALLBACK_COUNT = (
@@ -353,7 +398,7 @@ CONSENSUS_DOWNLOAD_SPEED_MAX = (
 # If the relay fails a consensus check, retry the download
 # This avoids delisting a relay due to transient network conditions
 CONSENSUS_DOWNLOAD_RETRY = getenv_conf('TOR_FB_CONSENSUS_DOWNLOAD_RETRY',
-                                       True, bool)
+                                       True, custom_bool)
 
 ## Parsing Functions
 
