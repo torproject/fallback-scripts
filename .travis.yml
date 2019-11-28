@@ -8,6 +8,8 @@ os:
   - linux
   ## We also run a single macOS job with python 2.7
 
+## We don't use the build matrix cross-product, because it makes too many jobs
+## Instead, we list each job under matrix: include:
 matrix:
   # include creates Linux, python 2.7 builds by default
   # the key(s) in each item override these defaults
