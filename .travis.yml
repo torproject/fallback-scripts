@@ -22,8 +22,8 @@ matrix:
       python:
 
     ## Test all supported python releases
-    ## Pre-installed in Travis xenial:
-    ## https://docs.travis-ci.com/user/reference/xenial/#python-support
+    ## Pre-installed in Travis Bionic:
+    ## https://docs.travis-ci.com/user/reference/bionic/#python-support
     ## End of Life: 1 January 2020
     ## https://www.python.org/dev/peps/pep-0373/#id2
     - python: "2.7"
@@ -66,14 +66,24 @@ matrix:
   #allow_failures:
   #  - python: "3.7"
 
-## (Linux only) Use the Ubuntu Xenial Linux Image
-## deb.torproject.org doesn't support Trusty any more
-dist: xenial
+## (Linux only) Use a recent Linux image (Ubuntu Bionic)
+dist: bionic
 
-## (OSX only) Use the default OSX image
+## (OSX only) Use a recent macOS image
 ## See https://docs.travis-ci.com/user/reference/osx#os-x-version
-## Default is Xcode 9.4 on macOS 10.13 as of August 2018
-#osx_image: xcode9.4
+## Default is Xcode 9.4 on macOS 10.13 as of October 2019
+## Recent is Xcode 11.2 on macOS 10.14 as of October 2019
+osx_image: xcode11.2
+
+addons:
+  ## (macOS only)
+  homebrew:
+    packages:
+      ## macOS needs pip(2) from homebrew python
+      - python@2
+    ## See ticket #30928 for more information. This key should be removed at
+    ## some point to speed up builds.
+    update: true
 
 install:
   ## We also need to install stem's dependencies
