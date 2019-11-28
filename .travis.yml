@@ -25,34 +25,26 @@ matrix:
     ## Pre-installed in Travis Bionic:
     ## https://docs.travis-ci.com/user/reference/bionic/#python-support
     ## End of Life: 1 January 2020
-    ## https://www.python.org/dev/peps/pep-0373/#id2
+    ## https://www.python.org/dev/peps/pep-0373/#update
     - python: "2.7"
 
     ### TODO: the fallback scripts don't work with python 3 yet ###
-    ## End of Life: December 2021
-    ## https://www.python.org/dev/peps/pep-0494/#lifespan
-    #- python: "3.6"
-    ## End of Life: June 2023
-    ## https://www.python.org/dev/peps/pep-0537/#lifespan
-    #- python: "3.7"
-    ## Stable: 20 October 2019
-    ## (Switch from 3.8-dev to 3.8, and check for 3.9-dev)
-    ## End of Life: October 2024
-    ## https://www.python.org/dev/peps/pep-0569/#lifespan
-    #- python: "3.8-dev"
-    ## Nightly python
-    #- python: "nightly"
-    # PyPy versions
+    ### See chutney's .travis.yml for the latest python version list ###
+
+    ## PyPy versions
     ## End of Life: "forever"
     ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
-    ## But stem may decide not to support python 2 after 1 Jan 2020.
-    ## Travis Xenial does not support pypy2.7
-    #- python: "pypy2.7"
-    ## PyPy does not have documented end of life dates
-    #- python: "pypy3.5"
-    ## PyPy 3.6 is currently in alpha
-    ## Travis Xenial does not support pypy3.6-dev yet?
-    #- python: "pypy3.6-dev"
+    ## But stem or fallback-scripts may decide not to support python 2
+    ## after 1 Jan 2020.
+    - python: "pypy"
+      dist: xenial
+
+    ### TODO: the fallback scripts don't work with python 3 yet ###
+    ### See chutney's .travis.yml for the latest python version list ###
+    - python: "3.6"
+    - python: "nightly"
+    - python: "pypy3"
+      dist: xenial
 
   ## Uncomment to allow the build to report success (with non-required
   ## sub-builds continuing to run) if all required sub-builds have
@@ -63,8 +55,10 @@ matrix:
   #fast_finish: true
 
   ## These builds fail in Travis at the moment
-  #allow_failures:
-  #  - python: "3.7"
+  allow_failures:
+    - python: "3.6"
+    - python: "nightly"
+    - python: "pypy3"
 
 ## (Linux only) Use a recent Linux image (Ubuntu Bionic)
 dist: bionic
