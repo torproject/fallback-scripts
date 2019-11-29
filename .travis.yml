@@ -82,14 +82,15 @@ addons:
     update: true
 
 install:
-  ## We also need to install stem's dependencies
-  - pip install -U pip
-  - pip install -r requirements.txt
   ## List installed package versions
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
-  - pip list
   - python --version
+  ## We could install stem's dependencies, but they are all optional
+  - pip install -U pip
+  - pip install -r requirements.txt
+  # Now list installed python package versions
+  - pip list
 
 script:
   ## Run some fallback-scripts tests
