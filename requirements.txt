@@ -1,3 +1,2 @@
-py2-ipaddress
 python-dateutil
 stem
