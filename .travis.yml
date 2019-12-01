@@ -8,6 +8,15 @@ os:
   - linux
   ## We also run a single macOS job with python 2.7
 
+## Default env vars
+env:
+  global:
+    ## Most builds use "pip" as the pip command name
+    - PIP="pip"
+  matrix:
+    ## This matrix entry is required, but it doesn't actually create any jobs
+    -
+
 ## We don't use the build matrix cross-product, because it makes too many jobs
 ## Instead, we list each job under matrix: include:
 matrix:
@@ -22,6 +31,21 @@ matrix:
     - os: osx
       language: c
       python:
+      addons:
+        ## (macOS only)
+        homebrew:
+          packages:
+            ## macOS needs pip(2) from homebrew python
+            - python@2
+          ## See ticket #30928 for more information. This key should be
+          ## removed at some point to speed up builds.
+          update: true
+      env: PYTHON="2.7"
+    - os: osx
+      language: c
+      python:
+      ## python 3 is already installed
+      env: PYTHON="3" PIP="pip3"
 
     ## Test all supported python releases
     ## Pre-installed in Travis Bionic:
@@ -61,25 +85,17 @@ matrix:
     - python: "3.6"
     - python: "nightly"
     - python: "pypy3"
+    ## (macOS only)
+    - env: PYTHON="3" PIP="pip3"
 
 ## (Linux only) Use a recent Linux image (Ubuntu Bionic)
 dist: bionic
 
-## (OSX only) Use a recent macOS image
+## (macOS only) Use a recent macOS image
 ## See https://docs.travis-ci.com/user/reference/osx#os-x-version
 ## Default is Xcode 9.4 on macOS 10.13 as of October 2019
 ## Recent is Xcode 11.2 on macOS 10.14 as of October 2019
 osx_image: xcode11.2
-
-addons:
-  ## (macOS only)
-  homebrew:
-    packages:
-      ## macOS needs pip(2) from homebrew python
-      - python@2
-    ## See ticket #30928 for more information. This key should be removed at
-    ## some point to speed up builds.
-    update: true
 
 install:
   ## List installed package versions
@@ -89,11 +105,11 @@ install:
   ## Are we running python 2?
   - if python --version 2>&1 | cut -d" " -f2 | grep -q '2[.]'; then PY2=1; else PY2= ; fi
   ## We could install stem's dependencies, but they are all optional
-  - pip install -U pip
-  - pip install -r requirements.txt
-  - if [[ "$PY2" ]]; then pip install -r requirements-python2.txt; fi
+  - $PIP install -U pip
+  - $PIP install -r requirements.txt
+  - if [[ "$PY2" ]]; then $PIP install -r requirements-python2.txt; fi
   ## Now list installed python package versions
-  - pip list
+  - $PIP list
 
 script:
   ## Run some fallback-scripts tests
