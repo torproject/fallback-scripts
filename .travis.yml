@@ -86,10 +86,13 @@ install:
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
   - python --version
+  ## Are we running python 2?
+  - if python --version 2>&1 | cut -d" " -f2 | grep -q '2[.]'; then PY2=1; else PY2= ; fi
   ## We could install stem's dependencies, but they are all optional
   - pip install -U pip
   - pip install -r requirements.txt
-  # Now list installed python package versions
+  - if [[ "$PY2" ]]; then pip install -r requirements-python2.txt; fi
+  ## Now list installed python package versions
   - pip list
 
 script:
