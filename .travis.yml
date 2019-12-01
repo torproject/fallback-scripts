@@ -11,7 +11,8 @@ os:
 ## Default env vars
 env:
   global:
-    ## Most builds use "pip" as the pip command name
+    ## Most builds use the standard command names
+    - PYTHON="python"
     - PIP="pip"
   matrix:
     ## This matrix entry is required, but it doesn't actually create any jobs
@@ -40,12 +41,11 @@ matrix:
           ## See ticket #30928 for more information. This key should be
           ## removed at some point to speed up builds.
           update: true
-      env: PYTHON="2.7"
     - os: osx
       language: c
       python:
-      ## python 3 is already installed
-      env: PYTHON="3" PIP="pip3"
+      ## python 3 is already installed, under these names
+      env: PYTHON="python3" PIP="pip3"
 
     ## Test all supported python releases
     ## Pre-installed in Travis Bionic:
@@ -86,7 +86,7 @@ matrix:
     - python: "nightly"
     - python: "pypy3"
     ## (macOS only)
-    - env: PYTHON="3" PIP="pip3"
+    - env: PYTHON="python3" PIP="pip3"
 
 ## (Linux only) Use a recent Linux image (Ubuntu Bionic)
 dist: bionic
@@ -101,9 +101,9 @@ install:
   ## List installed package versions
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
-  - python --version
+  - $PYTHON --version
   ## Are we running python 2?
-  - if python --version 2>&1 | cut -d" " -f2 | grep -q '2[.]'; then PY2=1; else PY2= ; fi
+  - if $PYTHON --version 2>&1 | cut -d" " -f2 | grep -q '2[.]'; then PY2=1; else PY2= ; fi
   ## We could install stem's dependencies, but they are all optional
   - $PIP install -U pip
   - $PIP install -r requirements.txt
@@ -115,13 +115,13 @@ script:
   ## Run some fallback-scripts tests
   ## moria1, Serge, no caches extra info, no dir port, doesn't exist
   ## TODO: validate output from all 3 commands using grep, grep, and stem?
-  - ./generateFallbackDirLine.py 9695DFC35FFEB861329B9F1AB04C46397020CE31 BA44A889E64B93FAA2B114E02C2A279A8555C533 001524DD403D729F08F7E5D77813EF12756CFA8D 5AFAC3D00E97D6733112CC9CA2A788691FA87125 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
-  - ./lookupFallbackDirContact.py 9695DFC35FFEB861329B9F1AB04C46397020CE31 BA44A889E64B93FAA2B114E02C2A279A8555C533 001524DD403D729F08F7E5D77813EF12756CFA8D 5AFAC3D00E97D6733112CC9CA2A788691FA87125 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  - $PYTHON generateFallbackDirLine.py 9695DFC35FFEB861329B9F1AB04C46397020CE31 BA44A889E64B93FAA2B114E02C2A279A8555C533 001524DD403D729F08F7E5D77813EF12756CFA8D 5AFAC3D00E97D6733112CC9CA2A788691FA87125 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+  - $PYTHON lookupFallbackDirContact.py 9695DFC35FFEB861329B9F1AB04C46397020CE31 BA44A889E64B93FAA2B114E02C2A279A8555C533 001524DD403D729F08F7E5D77813EF12756CFA8D 5AFAC3D00E97D6733112CC9CA2A788691FA87125 AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
   ## If we get the top 200 relays from Onionoo, we generate a list with about
   ## 10 fallbacks
   - export TOR_FB_ONIONOO_LIMIT=200
   ## Hide info-level logs
-  - ./updateFallbackDirs.py 2>&1 | tee -a fallback.log | grep -v "INFO::"
+  - $PYTHON updateFallbackDirs.py 2>&1 | tee -a fallback.log | grep -v "INFO::"
 
 after_failure:
   ## Show all the output, including info-level logs
