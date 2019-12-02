@@ -23,7 +23,7 @@
 # If this is not possible, please disable:
 # PERFORM_IPV4_DIRPORT_CHECKS and PERFORM_IPV6_DIRPORT_CHECKS
 #
-# Needs dateutil, stem, and potentially other python packages.
+# Needs [python-]dateutil, stem, and potentially other python packages.
 # Optionally uses ipaddress (python 3 builtin) or py2-ipaddress (package)
 # for netblock analysis.
 #
