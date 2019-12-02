@@ -8,44 +8,47 @@
 
 import sys
 
-from six.moves import urllib
-
-import stem
-import stem.descriptor.remote
-import stem.util.tor_tools
-
-## Stem version compatibility
-try:
-  stem_DownloadFailed = stem.DownloadFailed
-except AttributeError:
-  class DummyException(BaseException):
-    pass
-  stem_DownloadFailed = DummyException
+import stem.descriptor.remote as remote
+import stem.util.tor_tools as tor_tools
 
 if len(sys.argv) <= 1:
   print('Usage: %s fingerprint ...' % sys.argv[0])
   sys.exit(1)
 
-for fingerprint in sys.argv[1:]:
-  if not stem.util.tor_tools.is_valid_fingerprint(fingerprint):
+input_list = sys.argv[1:]
+
+for fingerprint in input_list:
+  if not tor_tools.is_valid_fingerprint(fingerprint):
     print("'%s' isn't a valid relay fingerprint" % fingerprint)
     sys.exit(1)
 
-  try:
-    desc = stem.descriptor.remote.get_server_descriptors(fingerprint).run()[0]
-  except urllib.error.HTTPError as exc:
-    if exc.code == 404:
-      print('# %s not found in recent descriptors' % fingerprint)
-      continue
-    else:
-      raise
-  except stem_DownloadFailed as exc:
-    print('# %s not found by stem' % fingerprint)
+found_list = []
+desc_query = remote.get_server_descriptors(input_list,
+                                           retries=3,
+                                           timeout=30)
+for desc in desc_query.run():
+  assert desc.fingerprint in input_list
+  # Skip duplicates on retries
+  if desc.fingerprint in found_list:
     continue
+  found_list.append(desc.fingerprint)
 
   if not desc.dir_port:
-    print("# %s needs a DirPort" % fingerprint)
+    print("# %s needs a DirPort" % desc.fingerprint)
   else:
-    ipv6_addresses = [(address, port) for address, port, is_ipv6 in desc.or_addresses if is_ipv6]
-    ipv6_field = ' ipv6=[%s]:%s' % ipv6_addresses[0] if ipv6_addresses else ''
-    print('%s:%s orport=%s id=%s%s # %s' % (desc.address, desc.dir_port, desc.or_port, fingerprint, ipv6_field, desc.nickname))
+    ipv6_addresses = [(address, port)
+                      for address, port, is_ipv6 in desc.or_addresses
+                      if is_ipv6]
+    ipv6_field = (' ipv6=[%s]:%s' % ipv6_addresses[0]
+                  if ipv6_addresses
+                  else '')
+    print('%s:%s orport=%s id=%s%s # %s' % (desc.address,
+                                            desc.dir_port,
+                                            desc.or_port,
+                                            desc.fingerprint,
+                                            ipv6_field,
+                                            desc.nickname))
+
+for fingerprint in input_list:
+  if fingerprint not in found_list:
+    print("# {} not found in current descriptors".format(fingerprint))
