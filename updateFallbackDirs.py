@@ -35,27 +35,35 @@
 # https://trac.torproject.org/projects/tor/attachment/ticket/8374/dir_list.2.py
 # Modifications by teor, 2015
 
+## Imports: version-independent
+
 import copy
 import datetime
 import dateutil.parser
 import gzip
 import hashlib
 import json
+import logging
 import math
 import os
 import os.path
 import re
 import string
-import StringIO
 import sys
-import urllib
-import urllib2
 
 from stem.descriptor import DocumentHandler
 from stem.descriptor.remote import get_consensus, get_server_descriptors, MAX_FINGERPRINTS
 
-import logging
+## Imports: python 2/3 compatibility
+
+import six
+from six.moves import urllib
+
+## Logging Configuration
+
 logging.root.name = ''
+
+## Imports: optional
 
 HAVE_IPADDRESS = False
 try:
