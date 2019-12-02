@@ -514,7 +514,7 @@ def write_to_file(str, file_name, max_len):
   try:
     with open(file_name, 'w') as f:
       f.write(str[0:max_len])
-  except EnvironmentError, error:
+  except EnvironmentError as error:
     logging.error('Writing file %s failed: %d: %s'%
                   (file_name,
                    error.errno,
@@ -526,7 +526,7 @@ def read_from_file(file_name, max_len):
     if os.path.isfile(file_name):
       with open(file_name, 'r') as f:
         return f.read(max_len)
-  except EnvironmentError, error:
+  except EnvironmentError as error:
     logging.info('Loading file %s failed: %d: %s'%
                  (file_name,
                   error.errno,
@@ -557,7 +557,7 @@ def load_json_from_file(json_file_name):
     try:
       with open(json_file_name, 'r') as f:
         return json.load(f)
-    except EnvironmentError, error:
+    except EnvironmentError as error:
       raise Exception('Reading not-modified json file %s failed: %d: %s'%
                     (json_file_name,
                      error.errno,
@@ -635,7 +635,7 @@ def onionoo_fetch(what, **kwargs):
     try:
       response = urllib2.urlopen(request)
       response_code = response.getcode()
-    except urllib2.HTTPError, error:
+    except urllib2.HTTPError as error:
       response_code = error.code
       if response_code == 304: # not modified
         pass
@@ -1415,7 +1415,7 @@ class Candidate(object):
       end = datetime.datetime.utcnow()
       time_since_expiry = (end - consensus.valid_until).total_seconds()
       time_until_valid = (consensus.valid_after - end).total_seconds()
-    except Exception, stem_error:
+    except Exception as stem_error:
       end = datetime.datetime.utcnow()
       log_excluded('Unable to retrieve a consensus from %s: %s', nickname,
                     stem_error)
