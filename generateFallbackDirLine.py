@@ -7,7 +7,8 @@
 # generateFallbackDirLine.py fingerprint ...
 
 import sys
-import urllib2
+
+from six.moves import urllib
 
 import stem
 import stem.descriptor.remote
@@ -32,7 +33,7 @@ for fingerprint in sys.argv[1:]:
 
   try:
     desc = stem.descriptor.remote.get_server_descriptors(fingerprint).run()[0]
-  except urllib2.HTTPError as exc:
+  except urllib.error.HTTPError as exc:
     if exc.code == 404:
       print('# %s not found in recent descriptors' % fingerprint)
       continue
