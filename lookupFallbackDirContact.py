@@ -11,7 +11,7 @@ import sys
 import stem.descriptor.remote as remote
 
 if len(sys.argv) <= 1:
-  print "Usage: {} fingerprint ...".format(sys.argv[0])
+  print("Usage: {} fingerprint ...".format(sys.argv[0]))
   sys.exit(-1)
 
 # we need descriptors, because the consensus does not have contact infos
@@ -22,8 +22,8 @@ for d in descriptor_list:
   assert d.fingerprint in sys.argv[1:]
   descriptor_list_fingerprints.append(d.fingerprint)
   contact = d.contact if d.contact else "(no contact)"
-  print "{} {}".format(d.fingerprint, contact)
+  print("{} {}".format(d.fingerprint, contact))
 
 for fingerprint in sys.argv[1:]:
   if fingerprint not in descriptor_list_fingerprints:
-    print "{} # not found in current descriptors".format(fingerprint)
+    print("{} # not found in current descriptors".format(fingerprint))
