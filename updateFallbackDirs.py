@@ -688,7 +688,7 @@ def onionoo_fetch(what, **kwargs):
 def fetch(what, **kwargs):
   #x = onionoo_fetch(what, **kwargs)
   # don't use sort_keys, as the order of or_addresses is significant
-  #print json.dumps(x, indent=4, separators=(',', ': '))
+  #print(json.dumps(x, indent=4, separators=(',', ': ')))
   #sys.exit(0)
 
   return onionoo_fetch(what, **kwargs)
@@ -978,8 +978,8 @@ class Candidate(object):
         logging.warning('Inconsistent time information in %s document for %s'
                         %(p, which))
 
-    #print json.dumps(generic_history, sort_keys=True,
-    #                  indent=4, separators=(',', ': '))
+    #print(json.dumps(generic_history, sort_keys=True,
+    #                 indent=4, separators=(',', ': ')))
     return generic_history
 
   @staticmethod
@@ -1007,7 +1007,7 @@ class Candidate(object):
     periods = r['read_history'].keys()
     periods.sort(key = lambda x: r['read_history'][x]['interval'] )
 
-    print periods
+    print(periods)
 
   def add_running_history(self, history):
     pass
@@ -1723,8 +1723,8 @@ class CandidateList(dict):
         key_value_split = item.split('=')
         kvl = len(key_value_split)
         if kvl < 1 or kvl > 2:
-          print '#error Bad %s item: %s, format is key=value.'%(
-                                                 file_name, item)
+          print('#error Bad %s item: %s, format is key=value.'%(
+                                                 file_name, item))
         if kvl == 1:
           # assume that entries without a key are the ipv4 address,
           # perhaps with a dirport
@@ -1732,8 +1732,8 @@ class CandidateList(dict):
           ipv4_maybe_dirport_split = ipv4_maybe_dirport.split(':')
           dirl = len(ipv4_maybe_dirport_split)
           if dirl < 1 or dirl > 2:
-            print '#error Bad %s IPv4 item: %s, format is ipv4:port.'%(
-                                                        file_name, item)
+            print('#error Bad %s IPv4 item: %s, format is ipv4:port.'%(
+                                                        file_name, item))
           if dirl >= 1:
             relay_entry['ipv4'] = ipv4_maybe_dirport_split[0]
           if dirl == 2:
@@ -1745,8 +1745,8 @@ class CandidateList(dict):
             ipv6_orport_split = key_value_split[1].rsplit(':', 1)
             ipv6l = len(ipv6_orport_split)
             if ipv6l != 2:
-              print '#error Bad %s IPv6 item: %s, format is [ipv6]:orport.'%(
-                                                          file_name, item)
+              print('#error Bad %s IPv6 item: %s, format is [ipv6]:orport.'%(
+                                                          file_name, item))
             relay_entry['ipv6_addr'] = ipv6_orport_split[0]
             relay_entry['ipv6_orport'] = ipv6_orport_split[1]
       relaylist.append(relay_entry)
@@ -2419,19 +2419,19 @@ def list_fallbacks(whitelist, exact=False):
   """ Fetches required onionoo documents and evaluates the
       fallback directory criteria for each of the relays,
       passing exact to apply_filter_lists(). """
-  print "/* type=fallback */"
-  print ("/* version={} */"
-         .format(cleanse_c_multiline_comment(FALLBACK_FORMAT_VERSION)))
+  print("/* type=fallback */")
+  print("/* version={} */"
+        .format(cleanse_c_multiline_comment(FALLBACK_FORMAT_VERSION)))
   now = datetime.datetime.utcnow()
   timestamp = now.strftime('%Y%m%d%H%M%S')
-  print ("/* timestamp={} */"
-         .format(cleanse_c_multiline_comment(timestamp)))
+  print("/* timestamp={} */"
+        .format(cleanse_c_multiline_comment(timestamp)))
   if whitelist['check_existing']:
-      print "/* source=fallback */"
+      print("/* source=fallback */")
   else:
-      print "/* source=whitelist */"
+      print("/* source=whitelist */")
   # end the header with a separator, to make it easier for parsers
-  print SECTION_SEPARATOR_COMMENT
+  print(SECTION_SEPARATOR_COMMENT)
 
   logging.warning('Downloading and parsing Onionoo data. ' +
                   'This may take some time.')
@@ -2463,8 +2463,8 @@ def list_fallbacks(whitelist, exact=False):
   # instead, there will be an info-level log during the eligibility check.
   initial_count = len(candidates.fallbacks)
   excluded_count = candidates.apply_filter_lists(whitelist, exact=exact)
-  print candidates.summarise_filters(initial_count, excluded_count,
-          whitelist['check_existing'])
+  print(candidates.summarise_filters(initial_count, excluded_count,
+                                     whitelist['check_existing']))
   eligible_count = len(candidates.fallbacks)
 
   # calculate the measured bandwidth of each relay,
@@ -2474,9 +2474,9 @@ def list_fallbacks(whitelist, exact=False):
 
   # print the raw fallback list
   #for x in candidates.fallbacks:
-  #  print x.fallbackdir_line(True)
-  #  print json.dumps(candidates[x]._data, sort_keys=True, indent=4,
-  #                   separators=(',', ': '), default=json_util.default)
+  #  print(x.fallbackdir_line(True))
+  #  print(json.dumps(candidates[x]._data, sort_keys=True, indent=4,
+  #                   separators=(',', ': '), default=json_util.default))
 
   # impose mandatory conditions here, like one per contact, family, IP
   # in measured bandwidth order
@@ -2515,19 +2515,19 @@ def list_fallbacks(whitelist, exact=False):
 
   # output C comments summarising the fallback selection process
   if len(candidates.fallbacks) > 0:
-    print candidates.summarise_fallbacks(eligible_count, operator_count,
+    print(candidates.summarise_fallbacks(eligible_count, operator_count,
                                          failed_count, guard_count,
                                          target_count,
-                                         whitelist['check_existing'])
+                                         whitelist['check_existing']))
   else:
-    print '/* No Fallbacks met criteria */'
+    print('/* No Fallbacks met criteria */')
 
   # output C comments specifying the Onionoo data used to create the list
   for s in fetch_source_list():
-    print describe_fetch_source(s)
+    print(describe_fetch_source(s))
 
   # start the list with a separator, to make it easy for parsers
-  print SECTION_SEPARATOR_COMMENT
+  print(SECTION_SEPARATOR_COMMENT)
 
   # sort the list differently depending on why we've created it:
   # if we're outputting the final fallback list, sort by fingerprint
@@ -2539,7 +2539,7 @@ def list_fallbacks(whitelist, exact=False):
   candidates.sort_fallbacks_by(OUTPUT_SORT_FIELD)
 
   for x in candidates.fallbacks:
-    print x.fallbackdir_line(candidates.fallbacks, prefilter_fallbacks)
+    print(x.fallbackdir_line(candidates.fallbacks, prefilter_fallbacks))
 
 if __name__ == "__main__":
   main()
