@@ -24,11 +24,15 @@ matrix:
   # include creates Linux, python 2.7 builds by default
   # the key(s) in each item override these defaults
   include:
-    ## macOS on Travis is tricky:
+    ## Test all supported python releases
+
+    ## python in macOS on Travis is tricky:
     ##   - We use the default python version on macOS, which is currently 2.7.
     ##     (But we don't show the version, because Travis might change it
     ##     without us noticing.)
     ##   - We use language: c, because language: python fails on Travis macOS.
+
+    ## We need to install python@2 in homebrew, to get pip[2]
     - os: osx
       language: c
       python:
@@ -36,40 +40,55 @@ matrix:
         ## (macOS only)
         homebrew:
           packages:
-            ## macOS needs pip(2) from homebrew python
+            ## macOS needs pip[2] from homebrew python
             - python@2
             - shellcheck
           ## See ticket #30928 for more information. This key should be
           ## removed at some point to speed up builds.
           update: true
+
+    ## Pre-installed in macOS
     - os: osx
       language: c
       python:
-      ## python 3 is already installed, under these names
+      ## python 3 is installed under these names
       env: PYTHON="python3" PIP="pip3"
 
-    ## Test all supported python releases
-    ## Pre-installed in Travis Bionic:
+    ## Pre-installed in Travis bionic:
     ## https://docs.travis-ci.com/user/reference/bionic/#python-support
     ## End of Life: 1 January 2020
     ## https://www.python.org/dev/peps/pep-0373/#update
     - python: "2.7"
+    ## End of Life: December 2021
+    ## https://www.python.org/dev/peps/pep-0494/#lifespan
+    - python: "3.6"
+    ## End of Life: June 2023
+    ## https://www.python.org/dev/peps/pep-0537/#lifespan
+    - python: "3.7"
 
-    ### TODO: the fallback scripts don't work with python 3 yet ###
-    ### See chutney's .travis.yml for the latest python version list ###
+    ## Extra Installs
+    ## End of Life: October 2024
+    ## https://www.python.org/dev/peps/pep-0569/#lifespan
+    - python: "3.8"
+    ## Python 3.9
+    ## Travis Dev Package: ????
+    ## (Add 3.9-dev)
+    ## Stable: 10 October 2020
+    ## (Switch from 3.9-dev to 3.9, and check for {3.10,4.0}-dev)
+    ## End of Life: October 2025
+    ## https://www.python.org/dev/peps/pep-0596/#lifespan
+    #- python: "3.9-dev"
+    - python: "nightly"
 
     ## PyPy versions
+    ## PyPy isn't packaged for Travis Bionic yet
     ## End of Life: "forever"
     ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
     ## But stem or fallback-scripts may decide not to support python 2
     ## after 1 Jan 2020.
     - python: "pypy"
       dist: xenial
-
-    ### TODO: the fallback scripts don't work with python 3 yet ###
-    ### See chutney's .travis.yml for the latest python version list ###
-    - python: "3.6"
-    - python: "nightly"
+    ## PyPy does not have documented end of life dates
     - python: "pypy3"
       dist: xenial
 
@@ -83,11 +102,7 @@ matrix:
 
   ## These builds fail in Travis at the moment
   allow_failures:
-    - python: "3.6"
-    - python: "nightly"
-    - python: "pypy3"
-    ## (macOS only)
-    - env: PYTHON="python3" PIP="pip3"
+    #- python: "nightly"
 
 ## (Linux only) Use a recent Linux image (Ubuntu Bionic)
 dist: bionic
