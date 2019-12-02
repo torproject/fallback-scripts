@@ -21,8 +21,9 @@ descriptor_list_fingerprints = []
 for d in descriptor_list:
   assert d.fingerprint in sys.argv[1:]
   descriptor_list_fingerprints.append(d.fingerprint)
-  print "{} {}".format(d.fingerprint, d.contact)
+  contact = d.contact if d.contact else "(no contact)"
+  print "{} {}".format(d.fingerprint, contact)
 
 for fingerprint in sys.argv[1:]:
   if fingerprint not in descriptor_list_fingerprints:
-    print "{} not found in current descriptors".format(fingerprint)
+    print "{} # not found in current descriptors".format(fingerprint)
