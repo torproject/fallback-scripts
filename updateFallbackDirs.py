@@ -967,7 +967,7 @@ class Candidate(object):
 
     generic_history = []
 
-    periods = history.keys()
+    periods = list(history.keys())
     periods.sort(key = lambda x: history[x]['interval'])
     now = datetime.datetime.utcnow()
     newest = now
@@ -1685,9 +1685,9 @@ class CandidateList(dict):
   # Find fallbacks that fit the uptime, stability, and flags criteria,
   # and make an array of them in self.fallbacks
   def compute_fallbacks(self):
-    self.fallbacks = map(lambda x: self[x],
-                         filter(lambda x: self[x].is_candidate(),
-                                self.keys()))
+    self.fallbacks = list(map(lambda x: self[x],
+                              filter(lambda x: self[x].is_candidate(),
+                                     self.keys())))
 
   # sort fallbacks by their consensus weight to advertised bandwidth factor,
   # lowest to highest
@@ -2084,8 +2084,8 @@ class CandidateList(dict):
     # now we have at least max_count successful candidates,
     # or we've tried them all
     original_count = len(self.fallbacks)
-    self.fallbacks = filter(lambda x: x.get_fallback_download_consensus(),
-                            self.fallbacks)
+    self.fallbacks = list(filter(lambda x: x.get_fallback_download_consensus(),
+                                 self.fallbacks))
     # some of these failed the check, others skipped the check,
     # if we already had enough successful downloads
     failed_count = original_count - len(self.fallbacks)
@@ -2233,15 +2233,16 @@ class CandidateList(dict):
 
   # return a list of fallbacks which are on the IPv4 ORPort port
   def fallbacks_on_ipv4_orport(self, port):
-    return filter(lambda x: x.orport == port, self.fallbacks)
+    return list(filter(lambda x: x.orport == port, self.fallbacks))
 
   # return a list of fallbacks which are on the IPv6 ORPort port
   def fallbacks_on_ipv6_orport(self, port):
-    return filter(lambda x: x.ipv6orport == port, self.fallbacks_with_ipv6())
+    return list(filter(lambda x: x.ipv6orport == port,
+                       self.fallbacks_with_ipv6()))
 
   # return a list of fallbacks which are on the DirPort port
   def fallbacks_on_dirport(self, port):
-    return filter(lambda x: x.dirport == port, self.fallbacks)
+    return list(filter(lambda x: x.dirport == port, self.fallbacks))
 
   # log a message about the proportion of fallbacks on IPv4 ORPort port
   # and return that count
@@ -2302,7 +2303,7 @@ class CandidateList(dict):
 
   # return a list of fallbacks which cache extra-info documents
   def fallbacks_with_extra_info_cache(self):
-    return filter(lambda x: x._extra_info_cache, self.fallbacks)
+    return list(filter(lambda x: x._extra_info_cache, self.fallbacks))
 
   # log a message about the proportion of fallbacks that cache extra-info docs
   def describe_fallback_extra_info_caches(self):
@@ -2314,7 +2315,7 @@ class CandidateList(dict):
 
   # return a list of fallbacks which have the Exit flag
   def fallbacks_with_exit(self):
-    return filter(lambda x: x.is_exit(), self.fallbacks)
+    return list(filter(lambda x: x.is_exit(), self.fallbacks))
 
   # log a message about the proportion of fallbacks with an Exit flag
   def describe_fallback_exit_flag(self):
@@ -2326,7 +2327,7 @@ class CandidateList(dict):
 
   # return a list of fallbacks which have an IPv6 address
   def fallbacks_with_ipv6(self):
-    return filter(lambda x: x.has_ipv6(), self.fallbacks)
+    return list(filter(lambda x: x.has_ipv6(), self.fallbacks))
 
   # log a message about the proportion of fallbacks on IPv6
   def describe_fallback_ip_family(self):
