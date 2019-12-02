@@ -21,7 +21,11 @@ descriptor_list_fingerprints = []
 for d in descriptor_list:
   assert d.fingerprint in sys.argv[1:]
   descriptor_list_fingerprints.append(d.fingerprint)
-  contact = d.contact if d.contact else "(no contact)"
+  if d.contact:
+    # Most ContactInfos should be UTF-8
+    contact = d.contact.decode(encoding="utf-8", errors="replace")
+  else:
+    contact = "(no contact)"
   print("{} {}".format(d.fingerprint, contact))
 
 for fingerprint in sys.argv[1:]:
