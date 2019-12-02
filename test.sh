@@ -36,5 +36,4 @@ $PYTHON lookupFallbackDirContact.py $TEST_RELAY_LIST
 # If we get the top 200 relays from Onionoo, we generate a list with about
 # 10 fallbacks
 export TOR_FB_ONIONOO_LIMIT=200
-# Hide info-level logs
-$PYTHON updateFallbackDirs.py 2>&1 | tee -a fallback.log | grep -v "INFO::"
+$PYTHON updateFallbackDirs.py

@@ -128,8 +128,8 @@ install:
 
 script:
   ## Run some fallback-scripts tests
-  ## Outputs fallback.log with info-level logs
-  - ./test.sh
+  ## Hide info-level logs, unless there is an error
+  - ./test.sh 2>&1 | tee fallback.log | grep -v "INFO::"
 
 after_failure:
   ## Show all the output, including info-level logs
