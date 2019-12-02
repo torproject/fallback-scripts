@@ -553,7 +553,7 @@ def parse_fallback_file(file_name):
 
 def load_possibly_compressed_response_json(response):
     if response.info().get('Content-Encoding') == 'gzip':
-      buf = StringIO.StringIO( response.read() )
+      buf = six.BytesIO( response.read() )
       f = gzip.GzipFile(fileobj=buf)
       return json.load(f)
     else:
@@ -597,7 +597,7 @@ def onionoo_fetch(what, **kwargs):
   # then use first_seen to get a stable order.
   # The order is important when we're limiting the number of relays returned.
   params['order'] = '-consensus_weight,first_seen'
-  url = ONIONOO + what + '?' + urllib.urlencode(params)
+  url = ONIONOO + what + '?' + urllib.parse.urlencode(params)
 
   # Unfortunately, the URL is too long for some OS filenames,
   # but we still don't want to get files from different URLs mixed up
@@ -619,7 +619,7 @@ def onionoo_fetch(what, **kwargs):
     # no need to compare as long as you trust SHA-1
     write_to_file(url, full_url_file_name, MAX_FULL_URL_LENGTH)
 
-    request = urllib2.Request(url)
+    request = urllib.request.Request(url)
     request.add_header('Accept-encoding', 'gzip')
 
     # load the last modified date from the file, if it exists
@@ -641,9 +641,9 @@ def onionoo_fetch(what, **kwargs):
     # Make the Onionoo request
     response_code = 0
     try:
-      response = urllib2.urlopen(request)
+      response = urllib.request.urlopen(request)
       response_code = response.getcode()
-    except urllib2.HTTPError as error:
+    except urllib.error.HTTPError as error:
       response_code = error.code
       if response_code == 304: # not modified
         pass
@@ -890,7 +890,7 @@ class Candidate(object):
     # checks both recommended versions and bug #20499 / #20509
     #
     # if the relay doesn't have a recommended version field, exclude the relay
-    if not self._data.has_key('recommended_version'):
+    if 'recommended_version' not in self._data:
       log_excluded('%s not a candidate: no recommended_version field',
                    self._fpr)
       return False
@@ -898,7 +898,7 @@ class Candidate(object):
       log_excluded('%s not a candidate: version not recommended', self._fpr)
       return False
     # if the relay doesn't have version field, exclude the relay
-    if not self._data.has_key('version'):
+    if 'version' not in self._data:
       log_excluded('%s not a candidate: no version field', self._fpr)
       return False
     if self._data['version'] in Candidate.STALE_CONSENSUS_VERSIONS:
@@ -1080,7 +1080,7 @@ class Candidate(object):
         log_excluded('%s not a candidate: guard avg too low (%lf)',
                      self._fpr, self._guard)
         return False
-      if (not self._data.has_key('consensus_weight')
+      if ('consensus_weight' not in self._data
           or self._data['consensus_weight'] < 1):
         log_excluded('%s not a candidate: consensus weight invalid', self._fpr)
         return False
@@ -1210,7 +1210,7 @@ class Candidate(object):
                       '%s:%d?', self._fpr, self.dirip, int(entry['orport']),
                       self.dirip, self.orport)
       return False
-    if entry.has_key('ipv6') and self.has_ipv6():
+    if 'ipv6' in entry and self.has_ipv6():
       # if both entry and fallback have an ipv6 address, compare them
       if not self.ipv6_and_orport_matches(entry['ipv6_addr'],
                                           entry['ipv6_orport'],
@@ -1221,11 +1221,11 @@ class Candidate(object):
         return False
     # if the fallback has an IPv6 address but the whitelist entry
     # doesn't, or vice versa, the whitelist entry doesn't match
-    elif entry.has_key('ipv6') and not self.has_ipv6():
+    elif 'ipv6' in entry and not self.has_ipv6():
       logging.warning('%s excluded: has it lost its former IPv6 address %s?',
                       self._fpr, entry['ipv6'])
       return False
-    elif not entry.has_key('ipv6') and self.has_ipv6():
+    elif 'ipv6' not in entry and self.has_ipv6():
       logging.warning('%s excluded: has it gained an IPv6 address %s:%d?',
                       self._fpr, self.ipv6addr, self.ipv6orport)
       return False
@@ -1246,7 +1246,7 @@ class Candidate(object):
       return True
     if self.ipv4_addr_matches(entry['ipv4'], exact=False):
       return True
-    if entry.has_key('ipv6') and self.has_ipv6():
+    if 'ipv6' in entry and self.has_ipv6():
       # if both entry and fallback have an ipv6 address, compare them
       if self.ipv6_addr_matches(entry['ipv6_addr'], exact=False):
         return True
@@ -1496,7 +1496,7 @@ class Candidate(object):
     if not PERFORM_IPV4_DIRPORT_CHECKS and not PERFORM_IPV6_DIRPORT_CHECKS:
       return True
     # if we are performing checks, but haven't done one, return False
-    if not self._data.has_key('download_check'):
+    if 'download_check' not in self._data:
       return False
     return self._data['download_check']
 
@@ -2012,7 +2012,7 @@ class CandidateList(dict):
     max_retries += (len(fingerprint_list) + MAX_FINGERPRINTS - 1) / MAX_FINGERPRINTS
     remaining_list = fingerprint_list
     desc_list = []
-    for _ in xrange(max_retries):
+    for _ in six.moves.range(max_retries):
       if len(remaining_list) == 0:
         break
       new_desc_list = CandidateList.get_fallback_descriptors_once(remaining_list[0:MAX_FINGERPRINTS])
