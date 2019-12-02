@@ -69,8 +69,8 @@ HAVE_IPADDRESS = False
 try:
   # python 3 builtin, or install package py2-ipaddress
   # there are several ipaddress implementations for python 2
-  # with slightly different semantics with str typed text
-  # fortunately, all our IP addresses are in unicode
+  # with slightly different semantics with bytes
+  # to avoid these issues, we make sure our IP addresses are in six.text_type
   import ipaddress
   HAVE_IPADDRESS = True
 except ImportError:
@@ -601,7 +601,7 @@ def onionoo_fetch(what, **kwargs):
 
   # Unfortunately, the URL is too long for some OS filenames,
   # but we still don't want to get files from different URLs mixed up
-  base_file_name = what + '-' + hashlib.sha1(url).hexdigest()
+  base_file_name = what + '-' + hashlib.sha1(url.encode('ascii')).hexdigest()
 
   full_url_file_name = base_file_name + '.full_url'
   MAX_FULL_URL_LENGTH = 1024
@@ -712,8 +712,6 @@ class Candidate(object):
               'consensus_weight', 'or_addresses', 'dir_address']:
       if not f in details: raise Exception("Document has no %s field."%(f,))
 
-    if not 'contact' in details:
-      details['contact'] = None
     if not 'flags' in details or details['flags'] is None:
       details['flags'] = []
     if (not 'advertised_bandwidth' in details
@@ -724,10 +722,19 @@ class Candidate(object):
     if (not 'effective_family' in details
         or details['effective_family'] is None):
       details['effective_family'] = []
-    if not 'platform' in details:
-      details['platform'] = None
     details['last_changed_address_or_port'] = parse_ts(
                                       details['last_changed_address_or_port'])
+
+    # Handle fields that can have arbitrary bytes, but should be UTF-8
+    if not 'contact' in details:
+      details['contact'] = None
+    else:
+      details['contact'] = six.ensure_text(details['contact'], errors='replace')
+    if not 'platform' in details:
+      details['platform'] = None
+    else:
+      details['platform'] = six.ensure_text(details['platform'], errors='replace')
+
     self._data = details
     self._stable_sort_or_addresses()
 
@@ -761,7 +768,7 @@ class Candidate(object):
   # is_valid_ipv[46]_address by gsathya, karsten, 2013
   @staticmethod
   def is_valid_ipv4_address(address):
-    if not isinstance(address, (str, unicode)):
+    if not isinstance(address, six.string_types):
       return False
 
     # check if there are four period separated values
@@ -779,7 +786,7 @@ class Candidate(object):
 
   @staticmethod
   def is_valid_ipv6_address(address):
-    if not isinstance(address, (str, unicode)):
+    if not isinstance(address, six.string_types):
       return False
 
     # remove brackets
@@ -814,6 +821,7 @@ class Candidate(object):
 
   def _split_dirport(self):
     # Split the dir_address into dirip and dirport
+    self._data['dir_address'] = six.ensure_text(self._data['dir_address'])
     (self.dirip, _dirport) = self._data['dir_address'].split(':', 2)
     self.dirport = int(_dirport)
 
@@ -827,6 +835,7 @@ class Candidate(object):
     for i in self._data['or_addresses']:
       if i != self._data['or_addresses'][0]:
         logging.debug('Secondary IPv4 Address Used for %s: %s'%(self._fpr, i))
+      i = six.ensure_text(i)
       (ipaddr, port) = i.rsplit(':', 1)
       if (ipaddr == self.dirip) and Candidate.is_valid_ipv4_address(ipaddr):
         self.orport = int(port)
@@ -841,17 +850,21 @@ class Candidate(object):
     self.ipv6orport = None
     # Choose the first IPv6 address that uses the same port as the ORPort
     for i in self._data['or_addresses']:
+      i = six.ensure_text(i)
       (ipaddr, port) = i.rsplit(':', 1)
+      port = int(port)
       if (port == self.orport) and Candidate.is_valid_ipv6_address(ipaddr):
         self.ipv6addr = ipaddr
-        self.ipv6orport = int(port)
+        self.ipv6orport = port
         return
     # Choose the first IPv6 address in the list
     for i in self._data['or_addresses']:
+      i = six.ensure_text(i)
       (ipaddr, port) = i.rsplit(':', 1)
+      port = int(port)
       if Candidate.is_valid_ipv6_address(ipaddr):
         self.ipv6addr = ipaddr
-        self.ipv6orport = int(port)
+        self.ipv6orport = port
         return
 
   def _compute_version(self):
@@ -1306,16 +1319,16 @@ class Candidate(object):
 
   # strip leading and trailing brackets from an IPv6 address
   # safe to use on non-bracketed IPv6 and on IPv4 addresses
-  # also convert to unicode, and make None appear as ''
+  # also make None appear as ''
   @staticmethod
   def strip_ipv6_brackets(ip):
     if ip is None:
-      return unicode('')
+      return ''
     if len(ip) < 2:
-      return unicode(ip)
+      return ip
     if ip[0] == '[' and ip[-1] == ']':
-      return unicode(ip[1:-1])
-    return unicode(ip)
+      return ip[1:-1]
+    return ip
 
   # are ip_a and ip_b in the same netblock?
   # mask_bits is the size of the netblock
