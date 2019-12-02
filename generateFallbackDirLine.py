@@ -9,8 +9,17 @@
 import sys
 import urllib2
 
+import stem
 import stem.descriptor.remote
 import stem.util.tor_tools
+
+## Stem version compatibility
+try:
+  stem_DownloadFailed = stem.DownloadFailed
+except AttributeError:
+  class DummyException(BaseException):
+    pass
+  stem_DownloadFailed = DummyException
 
 if len(sys.argv) <= 1:
   print('Usage: %s fingerprint ...' % sys.argv[0])
@@ -29,6 +38,9 @@ for fingerprint in sys.argv[1:]:
       continue
     else:
       raise
+  except stem_DownloadFailed as exc:
+    print('# %s not found by stem' % fingerprint)
+    continue
 
   if not desc.dir_port:
     print("# %s needs a DirPort" % fingerprint)
