@@ -1546,7 +1546,7 @@ class Candidate(object):
     bandwidth = self._data['measured_bandwidth']
     weight = self._data['consensus_weight']
     s += 'Bandwidth: %.1f MByte/s, Consensus Weight: %d'%(
-        bandwidth/(1024.0*1024.0),
+        bandwidth // (1024.0*1024.0),
         weight)
     s += '\n'
     if self._data['contact'] is not None:
@@ -1856,7 +1856,7 @@ class CandidateList(dict):
     # use the low-median when there are an evan number of fallbacks,
     # for consistency with the bandwidth authorities
     if len(self.fallbacks) > 0:
-      median_position = (len(self.fallbacks) - 1) / 2
+      median_position = (len(self.fallbacks) - 1) // 2
       if not require_advertised_bandwidth:
         return self.fallbacks[median_position]
       # if we need advertised_bandwidth but this relay doesn't have it,
@@ -2022,7 +2022,7 @@ class CandidateList(dict):
     # descriptors
     #
     # add an attempt for every MAX_FINGERPRINTS (or part thereof) in the list
-    max_retries += (len(fingerprint_list) + MAX_FINGERPRINTS - 1) / MAX_FINGERPRINTS
+    max_retries += (len(fingerprint_list) + MAX_FINGERPRINTS - 1) // MAX_FINGERPRINTS
     remaining_list = fingerprint_list
     desc_list = []
     for _ in six.moves.range(max_retries):
