@@ -38,6 +38,7 @@ matrix:
           packages:
             ## macOS needs pip(2) from homebrew python
             - python@2
+            - shellcheck
           ## See ticket #30928 for more information. This key should be
           ## removed at some point to speed up builds.
           update: true
@@ -97,6 +98,15 @@ dist: bionic
 ## Recent is Xcode 11.2 on macOS 10.14 as of October 2019
 osx_image: xcode11.2
 
+## Download our dependencies
+## We don't install shellcheck on macOS, because brew update is slow
+addons:
+  ## (Linux only)
+  apt:
+    packages:
+      ## Optional build dependencies
+      - shellcheck
+
 before_install:
   ## Set pipefail: we use pipes
   - set -o pipefail || echo "pipefail failed"
@@ -105,6 +115,7 @@ install:
   ## List installed package versions
   - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then dpkg-query --show; fi
   - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew list --versions; fi
+  - if command -v shellcheck ; then shellcheck --version; fi
   - $PYTHON --version
   ## Are we running python 2?
   - if $PYTHON --version 2>&1 | cut -d" " -f2 | grep -q '2[.]'; then PY2=1; else PY2= ; fi
