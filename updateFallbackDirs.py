@@ -263,23 +263,23 @@ ONIONOO_LIMIT = getenv_conf('TOR_FB_ONIONOO_LIMIT',
 LOCAL_FILES_ONLY = getenv_conf('TOR_FB_LOCAL_FILES_ONLY',
                                False, custom_bool)
 
-## Whitelist Filter Settings
+## Offer List Filter Settings
 
-# The whitelist contains entries that are included if one of the unique
+# The offer list contains entries that are included if one of the unique
 # attributes matches (IPv4, id, or IPv6 (optional))
 
-# What happens to entries not in whitelist?
+# What happens to relays not in the offer list?
 # When True, they are included, when False, they are excluded
 INCLUDE_UNLISTED_ENTRIES = getenv_conf('TOR_FB_INCLUDE_UNLISTED_ENTRIES',
                                        OUTPUT_CANDIDATES, custom_bool)
 
-WHITELIST_FILE_NAME = getenv_conf('TOR_FB_WHITELIST_FILE_NAME',
-                                  'fallback.whitelist', str)
+OFFER_LIST_FILE_NAME = getenv_conf('TOR_FB_OFFER_LIST_FILE_NAME',
+                                   'fallback_offer_list', str)
 FALLBACK_FILE_NAME = (
   getenv_conf('TOR_FB_FALLBACK_FILE_NAME',
               '../tor/src/app/config/fallback_dirs.inc', str))
 
-# The number of bytes we'll read from the whitelist file before giving up
+# The number of bytes we'll read from the offer list file before giving up
 MAX_LIST_FILE_SIZE = getenv_conf('TOR_FB_MAX_LIST_FILE_SIZE',
                                  1024 * 1024, int)
 
@@ -1166,8 +1166,8 @@ class Candidate(object):
           dirport
           orport
           id
-          ipv6 address and port (if present in the fallback or the whitelist)
-        If the fallback has an ipv6 key, the whitelist line must also have
+          ipv6 address and port (if present in the fallback or the offer list)
+        If the fallback has an ipv6 key, the offer list line must also have
         it, otherwise they don't match.
 
         Logs a warning-level message if the fallback would be an exact match,
@@ -1211,8 +1211,8 @@ class Candidate(object):
                         'to %s:%d?', self._fpr, entry['ipv6'],
                         self.ipv6addr, self.ipv6orport)
         return False
-    # if the fallback has an IPv6 address but the whitelist entry
-    # doesn't, or vice versa, the whitelist entry doesn't match
+    # if the fallback has an IPv6 address but the offer list entry
+    # doesn't, or vice versa, the offer list entry doesn't match
     elif entry.has_key('ipv6') and not self.has_ipv6():
       logging.warning('%s excluded: has it lost its former IPv6 address %s?',
                       self._fpr, entry['ipv6'])
@@ -1229,7 +1229,7 @@ class Candidate(object):
         in entry matches:
           id
           ipv4
-          ipv6 (if present in both the fallback and whitelist)
+          ipv6 (if present in both the fallback and offer list)
         The ports and nickname are ignored. Missing or extra ipv6 addresses
         are ignored.
 
@@ -1244,12 +1244,13 @@ class Candidate(object):
         return True
     return False
 
-  def is_in_whitelist(self, relaylist, exact=False):
+  def is_in_offer_list(self, relaylist, exact=False):
     """ If exact is True (existing fallback list), check if this fallback is
-        an exact match for any whitelist entry, using entry_matches_exact().
+        an exact match for any offer list entry, using entry_matches_exact().
 
-        If exact is False (new fallback whitelist), check if this fallback is
-        a fuzzy match for any whitelist entry, using entry_matches_fuzzy(). """
+        If exact is False (new fallback offer list), check if this fallback is
+        a fuzzy match for any offer list entry, using entry_matches_fuzzy().
+    """
     for entry in relaylist:
       if exact:
         if self.entry_matches_exact(entry):
@@ -1752,21 +1753,21 @@ class CandidateList(dict):
       relaylist.append(relay_entry)
     return relaylist
 
-  def apply_filter_lists(self, whitelist_obj, exact=False):
-    """ Apply the fallback whitelist_obj to this fallback list,
-        passing exact to is_in_whitelist(). """
+  def apply_filter_lists(self, offer_list_obj, exact=False):
+    """ Apply the fallback offer_list_obj to this fallback list,
+        passing exact to is_in_offer_list(). """
     excluded_count = 0
-    list_type = 'whitelist'
-    if whitelist_obj['check_existing']:
+    list_type = 'offer list'
+    if offer_list_obj['check_existing']:
         list_type = 'fallback list'
 
     logging.debug('Applying {}'.format(list_type))
-    # parse the whitelist
-    whitelist = self.load_relaylist(whitelist_obj)
+    # parse the offer list
+    offer_list = self.load_relaylist(offer_list_obj)
     filtered_fallbacks = []
     for f in self.fallbacks:
-      in_whitelist = f.is_in_whitelist(whitelist, exact=exact)
-      if in_whitelist:
+      in_offer_list = f.is_in_offer_list(offer_list, exact=exact)
+      if in_offer_list:
         # include
         filtered_fallbacks.append(f)
       elif INCLUDE_UNLISTED_ENTRIES:
@@ -1782,7 +1783,7 @@ class CandidateList(dict):
 
   @staticmethod
   def summarise_filters(initial_count, excluded_count, check_existing):
-    list_type = 'Whitelist'
+    list_type = 'Offer list'
     if check_existing:
         list_type = 'Fallback list'
 
@@ -2368,7 +2369,7 @@ class CandidateList(dict):
     s += '\n'
     s += '*/'
     if fallback_count < MIN_FALLBACK_COUNT:
-      list_type = 'whitelist'
+      list_type = 'offer list'
       if check_existing:
           list_type = 'fallback list'
       # We must have a minimum number of fallbacks so they are always
@@ -2383,18 +2384,19 @@ class CandidateList(dict):
 def process_existing():
   logging.basicConfig(level=logging.INFO)
   logging.getLogger('stem').setLevel(logging.INFO)
-  whitelist = {'data': parse_fallback_file(FALLBACK_FILE_NAME),
-               'name': FALLBACK_FILE_NAME,
-               'check_existing' : True}
-  list_fallbacks(whitelist, exact=True)
+  offer_list = {'data': parse_fallback_file(FALLBACK_FILE_NAME),
+                'name': FALLBACK_FILE_NAME,
+                'check_existing' : True}
+  list_fallbacks(offer_list, exact=True)
 
 def process_default():
   logging.basicConfig(level=logging.INFO)
   logging.getLogger('stem').setLevel(logging.INFO)
-  whitelist = {'data': read_from_file(WHITELIST_FILE_NAME, MAX_LIST_FILE_SIZE),
-               'name': WHITELIST_FILE_NAME,
-               'check_existing': False}
-  list_fallbacks(whitelist, exact=False)
+  offer_list = {'data': read_from_file(OFFER_LIST_FILE_NAME,
+                                       MAX_LIST_FILE_SIZE),
+                'name': OFFER_LIST_FILE_NAME,
+                'check_existing': False}
+  list_fallbacks(offer_list, exact=False)
 
 ## Main Function
 def main():
@@ -2415,7 +2417,7 @@ def log_excluded(msg, *args):
   else:
     logging.info(msg, *args)
 
-def list_fallbacks(whitelist, exact=False):
+def list_fallbacks(offer_list, exact=False):
   """ Fetches required onionoo documents and evaluates the
       fallback directory criteria for each of the relays,
       passing exact to apply_filter_lists(). """
@@ -2426,7 +2428,7 @@ def list_fallbacks(whitelist, exact=False):
   timestamp = now.strftime('%Y%m%d%H%M%S')
   print ("/* timestamp={} */"
          .format(cleanse_c_multiline_comment(timestamp)))
-  if whitelist['check_existing']:
+  if offer_list['check_existing']:
       print "/* source=fallback */"
   else:
       print "/* source=whitelist */"
@@ -2456,15 +2458,15 @@ def list_fallbacks(whitelist, exact=False):
   candidates.compute_fallbacks()
   prefilter_fallbacks = copy.copy(candidates.fallbacks)
 
-  # filter with the whitelist
+  # filter with the offer list
   # if a relay has changed IPv4 address or ports recently, it will be excluded
   # as ineligible before we call apply_filter_lists, and so there will be no
-  # warning that the details have changed from those in the whitelist.
+  # warning that the details have changed from those in the offer list.
   # instead, there will be an info-level log during the eligibility check.
   initial_count = len(candidates.fallbacks)
-  excluded_count = candidates.apply_filter_lists(whitelist, exact=exact)
+  excluded_count = candidates.apply_filter_lists(offer_list, exact=exact)
   print candidates.summarise_filters(initial_count, excluded_count,
-          whitelist['check_existing'])
+          offer_list['check_existing'])
   eligible_count = len(candidates.fallbacks)
 
   # calculate the measured bandwidth of each relay,
@@ -2518,7 +2520,7 @@ def list_fallbacks(whitelist, exact=False):
     print candidates.summarise_fallbacks(eligible_count, operator_count,
                                          failed_count, guard_count,
                                          target_count,
-                                         whitelist['check_existing'])
+                                         offer_list['check_existing'])
   else:
     print '/* No Fallbacks met criteria */'
 
