@@ -165,7 +165,7 @@ def custom_bool(raw_var_value, default_val, var_name=None):
 #   content
 # These variables are not configureable, because format changes need a spec
 # and code update.
-FALLBACK_FORMAT_VERSION = '2.0.0'
+FALLBACK_FORMAT_VERSION = '3.0.0'
 SECTION_SEPARATOR_BASE = '====='
 SECTION_SEPARATOR_COMMENT = '/* ' + SECTION_SEPARATOR_BASE + ' */'
 
@@ -2431,7 +2431,10 @@ def list_fallbacks(offer_list, exact=False):
   if offer_list['check_existing']:
       print "/* source=fallback */"
   else:
-      print "/* source=whitelist */"
+      # TODO: when we implement #24839, change this to descriptor,offer-list
+      # We might want add each key based on the size of the offer list, and
+      # the number of descriptors with offer-fallback-dir lines.
+      print "/* source=offer-list */"
   # end the header with a separator, to make it easier for parsers
   print SECTION_SEPARATOR_COMMENT
 
