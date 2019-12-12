@@ -35,6 +35,11 @@
 # https://trac.torproject.org/projects/tor/attachment/ticket/8374/dir_list.2.py
 # Modifications by teor, 2015
 
+# Future imports for Python 2.7, mandatory in 3.0
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 ## Imports: version-independent
 
 import copy
