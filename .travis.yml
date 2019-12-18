@@ -56,20 +56,25 @@ matrix:
 
     ## Pre-installed in Travis bionic:
     ## https://docs.travis-ci.com/user/reference/bionic/#python-support
+
     ## End of Life: 1 January 2020
     ## https://www.python.org/dev/peps/pep-0373/#update
     - python: "2.7"
+
     ## End of Life: December 2021
     ## https://www.python.org/dev/peps/pep-0494/#lifespan
     - python: "3.6"
+
     ## End of Life: June 2023
     ## https://www.python.org/dev/peps/pep-0537/#lifespan
     - python: "3.7"
 
     ## Extra Installs
+
     ## End of Life: October 2024
     ## https://www.python.org/dev/peps/pep-0569/#lifespan
     - python: "3.8"
+
     ## Python 3.9
     ## Travis Dev Package: ????
     ## (Add 3.9-dev)
@@ -78,16 +83,20 @@ matrix:
     ## End of Life: October 2025
     ## https://www.python.org/dev/peps/pep-0596/#lifespan
     #- python: "3.9-dev"
+
     - python: "nightly"
 
     ## PyPy versions
     ## PyPy isn't packaged for Travis Bionic yet
+
+    ## PyPy 2
     ## End of Life: "forever"
     ## http://doc.pypy.org/en/latest/faq.html#how-long-will-pypy-support-python2
     ## But stem or fallback-scripts may decide not to support python 2
     ## after 1 Jan 2020.
     - python: "pypy"
       dist: xenial
+
     ## PyPy does not have documented end of life dates
     - python: "pypy3"
       dist: xenial
