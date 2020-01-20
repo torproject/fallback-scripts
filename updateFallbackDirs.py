@@ -23,7 +23,7 @@
 # If this is not possible, please disable:
 # PERFORM_IPV4_DIRPORT_CHECKS and PERFORM_IPV6_DIRPORT_CHECKS
 #
-# Needs dateutil, stem, and potentially other python packages.
+# Needs [python-]dateutil, stem, and potentially other python packages.
 # Optionally uses ipaddress (python 3 builtin) or py2-ipaddress (package)
 # for netblock analysis.
 #
@@ -35,34 +35,47 @@
 # https://trac.torproject.org/projects/tor/attachment/ticket/8374/dir_list.2.py
 # Modifications by teor, 2015
 
+# Future imports for Python 2.7, mandatory in 3.0
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+## Imports: version-independent
+
 import copy
 import datetime
 import dateutil.parser
 import gzip
 import hashlib
 import json
+import logging
 import math
 import os
 import os.path
 import re
 import string
-import StringIO
 import sys
-import urllib
-import urllib2
 
 from stem.descriptor import DocumentHandler
 from stem.descriptor.remote import get_consensus, get_server_descriptors, MAX_FINGERPRINTS
 
-import logging
+## Imports: python 2/3 compatibility
+
+import six
+from six.moves import urllib
+
+## Logging Configuration
+
 logging.root.name = ''
+
+## Imports: optional
 
 HAVE_IPADDRESS = False
 try:
   # python 3 builtin, or install package py2-ipaddress
   # there are several ipaddress implementations for python 2
-  # with slightly different semantics with str typed text
-  # fortunately, all our IP addresses are in unicode
+  # with slightly different semantics with bytes
+  # to avoid these issues, we make sure our IP addresses are in six.text_type
   import ipaddress
   HAVE_IPADDRESS = True
 except ImportError:
@@ -514,7 +527,7 @@ def write_to_file(str, file_name, max_len):
   try:
     with open(file_name, 'w') as f:
       f.write(str[0:max_len])
-  except EnvironmentError, error:
+  except EnvironmentError as error:
     logging.error('Writing file %s failed: %d: %s'%
                   (file_name,
                    error.errno,
@@ -526,7 +539,7 @@ def read_from_file(file_name, max_len):
     if os.path.isfile(file_name):
       with open(file_name, 'r') as f:
         return f.read(max_len)
-  except EnvironmentError, error:
+  except EnvironmentError as error:
     logging.info('Loading file %s failed: %d: %s'%
                  (file_name,
                   error.errno,
@@ -545,7 +558,7 @@ def parse_fallback_file(file_name):
 
 def load_possibly_compressed_response_json(response):
     if response.info().get('Content-Encoding') == 'gzip':
-      buf = StringIO.StringIO( response.read() )
+      buf = six.BytesIO( response.read() )
       f = gzip.GzipFile(fileobj=buf)
       return json.load(f)
     else:
@@ -557,7 +570,7 @@ def load_json_from_file(json_file_name):
     try:
       with open(json_file_name, 'r') as f:
         return json.load(f)
-    except EnvironmentError, error:
+    except EnvironmentError as error:
       raise Exception('Reading not-modified json file %s failed: %d: %s'%
                     (json_file_name,
                      error.errno,
@@ -589,11 +602,11 @@ def onionoo_fetch(what, **kwargs):
   # then use first_seen to get a stable order.
   # The order is important when we're limiting the number of relays returned.
   params['order'] = '-consensus_weight,first_seen'
-  url = ONIONOO + what + '?' + urllib.urlencode(params)
+  url = ONIONOO + what + '?' + urllib.parse.urlencode(params)
 
   # Unfortunately, the URL is too long for some OS filenames,
   # but we still don't want to get files from different URLs mixed up
-  base_file_name = what + '-' + hashlib.sha1(url).hexdigest()
+  base_file_name = what + '-' + hashlib.sha1(url.encode('ascii')).hexdigest()
 
   full_url_file_name = base_file_name + '.full_url'
   MAX_FULL_URL_LENGTH = 1024
@@ -611,7 +624,7 @@ def onionoo_fetch(what, **kwargs):
     # no need to compare as long as you trust SHA-1
     write_to_file(url, full_url_file_name, MAX_FULL_URL_LENGTH)
 
-    request = urllib2.Request(url)
+    request = urllib.request.Request(url)
     request.add_header('Accept-encoding', 'gzip')
 
     # load the last modified date from the file, if it exists
@@ -633,9 +646,9 @@ def onionoo_fetch(what, **kwargs):
     # Make the Onionoo request
     response_code = 0
     try:
-      response = urllib2.urlopen(request)
+      response = urllib.request.urlopen(request)
       response_code = response.getcode()
-    except urllib2.HTTPError, error:
+    except urllib.error.HTTPError as error:
       response_code = error.code
       if response_code == 304: # not modified
         pass
@@ -688,7 +701,7 @@ def onionoo_fetch(what, **kwargs):
 def fetch(what, **kwargs):
   #x = onionoo_fetch(what, **kwargs)
   # don't use sort_keys, as the order of or_addresses is significant
-  #print json.dumps(x, indent=4, separators=(',', ': '))
+  #print(json.dumps(x, indent=4, separators=(',', ': ')))
   #sys.exit(0)
 
   return onionoo_fetch(what, **kwargs)
@@ -704,8 +717,6 @@ class Candidate(object):
               'consensus_weight', 'or_addresses', 'dir_address']:
       if not f in details: raise Exception("Document has no %s field."%(f,))
 
-    if not 'contact' in details:
-      details['contact'] = None
     if not 'flags' in details or details['flags'] is None:
       details['flags'] = []
     if (not 'advertised_bandwidth' in details
@@ -716,10 +727,19 @@ class Candidate(object):
     if (not 'effective_family' in details
         or details['effective_family'] is None):
       details['effective_family'] = []
-    if not 'platform' in details:
-      details['platform'] = None
     details['last_changed_address_or_port'] = parse_ts(
                                       details['last_changed_address_or_port'])
+
+    # Handle fields that can have arbitrary bytes, but should be UTF-8
+    if not 'contact' in details:
+      details['contact'] = None
+    else:
+      details['contact'] = six.ensure_text(details['contact'], errors='replace')
+    if not 'platform' in details:
+      details['platform'] = None
+    else:
+      details['platform'] = six.ensure_text(details['platform'], errors='replace')
+
     self._data = details
     self._stable_sort_or_addresses()
 
@@ -753,7 +773,7 @@ class Candidate(object):
   # is_valid_ipv[46]_address by gsathya, karsten, 2013
   @staticmethod
   def is_valid_ipv4_address(address):
-    if not isinstance(address, (str, unicode)):
+    if not isinstance(address, six.string_types):
       return False
 
     # check if there are four period separated values
@@ -771,7 +791,7 @@ class Candidate(object):
 
   @staticmethod
   def is_valid_ipv6_address(address):
-    if not isinstance(address, (str, unicode)):
+    if not isinstance(address, six.string_types):
       return False
 
     # remove brackets
@@ -806,6 +826,7 @@ class Candidate(object):
 
   def _split_dirport(self):
     # Split the dir_address into dirip and dirport
+    self._data['dir_address'] = six.ensure_text(self._data['dir_address'])
     (self.dirip, _dirport) = self._data['dir_address'].split(':', 2)
     self.dirport = int(_dirport)
 
@@ -819,6 +840,7 @@ class Candidate(object):
     for i in self._data['or_addresses']:
       if i != self._data['or_addresses'][0]:
         logging.debug('Secondary IPv4 Address Used for %s: %s'%(self._fpr, i))
+      i = six.ensure_text(i)
       (ipaddr, port) = i.rsplit(':', 1)
       if (ipaddr == self.dirip) and Candidate.is_valid_ipv4_address(ipaddr):
         self.orport = int(port)
@@ -833,17 +855,21 @@ class Candidate(object):
     self.ipv6orport = None
     # Choose the first IPv6 address that uses the same port as the ORPort
     for i in self._data['or_addresses']:
+      i = six.ensure_text(i)
       (ipaddr, port) = i.rsplit(':', 1)
+      port = int(port)
       if (port == self.orport) and Candidate.is_valid_ipv6_address(ipaddr):
         self.ipv6addr = ipaddr
-        self.ipv6orport = int(port)
+        self.ipv6orport = port
         return
     # Choose the first IPv6 address in the list
     for i in self._data['or_addresses']:
+      i = six.ensure_text(i)
       (ipaddr, port) = i.rsplit(':', 1)
+      port = int(port)
       if Candidate.is_valid_ipv6_address(ipaddr):
         self.ipv6addr = ipaddr
-        self.ipv6orport = int(port)
+        self.ipv6orport = port
         return
 
   def _compute_version(self):
@@ -882,7 +908,7 @@ class Candidate(object):
     # checks both recommended versions and bug #20499 / #20509
     #
     # if the relay doesn't have a recommended version field, exclude the relay
-    if not self._data.has_key('recommended_version'):
+    if 'recommended_version' not in self._data:
       log_excluded('%s not a candidate: no recommended_version field',
                    self._fpr)
       return False
@@ -890,7 +916,7 @@ class Candidate(object):
       log_excluded('%s not a candidate: version not recommended', self._fpr)
       return False
     # if the relay doesn't have version field, exclude the relay
-    if not self._data.has_key('version'):
+    if 'version' not in self._data:
       log_excluded('%s not a candidate: no version field', self._fpr)
       return False
     if self._data['version'] in Candidate.STALE_CONSENSUS_VERSIONS:
@@ -946,7 +972,7 @@ class Candidate(object):
 
     generic_history = []
 
-    periods = history.keys()
+    periods = list(history.keys())
     periods.sort(key = lambda x: history[x]['interval'])
     now = datetime.datetime.utcnow()
     newest = now
@@ -978,8 +1004,8 @@ class Candidate(object):
         logging.warning('Inconsistent time information in %s document for %s'
                         %(p, which))
 
-    #print json.dumps(generic_history, sort_keys=True,
-    #                  indent=4, separators=(',', ': '))
+    #print(json.dumps(generic_history, sort_keys=True,
+    #                 indent=4, separators=(',', ': ')))
     return generic_history
 
   @staticmethod
@@ -1007,7 +1033,7 @@ class Candidate(object):
     periods = r['read_history'].keys()
     periods.sort(key = lambda x: r['read_history'][x]['interval'] )
 
-    print periods
+    print(periods)
 
   def add_running_history(self, history):
     pass
@@ -1072,7 +1098,7 @@ class Candidate(object):
         log_excluded('%s not a candidate: guard avg too low (%lf)',
                      self._fpr, self._guard)
         return False
-      if (not self._data.has_key('consensus_weight')
+      if ('consensus_weight' not in self._data
           or self._data['consensus_weight'] < 1):
         log_excluded('%s not a candidate: consensus weight invalid', self._fpr)
         return False
@@ -1202,7 +1228,7 @@ class Candidate(object):
                       '%s:%d?', self._fpr, self.dirip, int(entry['orport']),
                       self.dirip, self.orport)
       return False
-    if entry.has_key('ipv6') and self.has_ipv6():
+    if 'ipv6' in entry and self.has_ipv6():
       # if both entry and fallback have an ipv6 address, compare them
       if not self.ipv6_and_orport_matches(entry['ipv6_addr'],
                                           entry['ipv6_orport'],
@@ -1213,11 +1239,11 @@ class Candidate(object):
         return False
     # if the fallback has an IPv6 address but the offer list entry
     # doesn't, or vice versa, the offer list entry doesn't match
-    elif entry.has_key('ipv6') and not self.has_ipv6():
+    elif 'ipv6' in entry and not self.has_ipv6():
       logging.warning('%s excluded: has it lost its former IPv6 address %s?',
                       self._fpr, entry['ipv6'])
       return False
-    elif not entry.has_key('ipv6') and self.has_ipv6():
+    elif 'ipv6' not in entry and self.has_ipv6():
       logging.warning('%s excluded: has it gained an IPv6 address %s:%d?',
                       self._fpr, self.ipv6addr, self.ipv6orport)
       return False
@@ -1238,7 +1264,7 @@ class Candidate(object):
       return True
     if self.ipv4_addr_matches(entry['ipv4'], exact=False):
       return True
-    if entry.has_key('ipv6') and self.has_ipv6():
+    if 'ipv6' in entry and self.has_ipv6():
       # if both entry and fallback have an ipv6 address, compare them
       if self.ipv6_addr_matches(entry['ipv6_addr'], exact=False):
         return True
@@ -1299,16 +1325,16 @@ class Candidate(object):
 
   # strip leading and trailing brackets from an IPv6 address
   # safe to use on non-bracketed IPv6 and on IPv4 addresses
-  # also convert to unicode, and make None appear as ''
+  # also make None appear as ''
   @staticmethod
   def strip_ipv6_brackets(ip):
     if ip is None:
-      return unicode('')
+      return ''
     if len(ip) < 2:
-      return unicode(ip)
+      return ip
     if ip[0] == '[' and ip[-1] == ']':
-      return unicode(ip[1:-1])
-    return unicode(ip)
+      return ip[1:-1]
+    return ip
 
   # are ip_a and ip_b in the same netblock?
   # mask_bits is the size of the netblock
@@ -1416,7 +1442,7 @@ class Candidate(object):
       end = datetime.datetime.utcnow()
       time_since_expiry = (end - consensus.valid_until).total_seconds()
       time_until_valid = (consensus.valid_after - end).total_seconds()
-    except Exception, stem_error:
+    except Exception as stem_error:
       end = datetime.datetime.utcnow()
       log_excluded('Unable to retrieve a consensus from %s: %s', nickname,
                     stem_error)
@@ -1489,7 +1515,7 @@ class Candidate(object):
     if not PERFORM_IPV4_DIRPORT_CHECKS and not PERFORM_IPV6_DIRPORT_CHECKS:
       return True
     # if we are performing checks, but haven't done one, return False
-    if not self._data.has_key('download_check'):
+    if 'download_check' not in self._data:
       return False
     return self._data['download_check']
 
@@ -1526,7 +1552,7 @@ class Candidate(object):
     bandwidth = self._data['measured_bandwidth']
     weight = self._data['consensus_weight']
     s += 'Bandwidth: %.1f MByte/s, Consensus Weight: %d'%(
-        bandwidth/(1024.0*1024.0),
+        bandwidth // (1024.0*1024.0),
         weight)
     s += '\n'
     if self._data['contact'] is not None:
@@ -1665,9 +1691,9 @@ class CandidateList(dict):
   # Find fallbacks that fit the uptime, stability, and flags criteria,
   # and make an array of them in self.fallbacks
   def compute_fallbacks(self):
-    self.fallbacks = map(lambda x: self[x],
-                         filter(lambda x: self[x].is_candidate(),
-                                self.keys()))
+    self.fallbacks = list(map(lambda x: self[x],
+                              filter(lambda x: self[x].is_candidate(),
+                                     self.keys())))
 
   # sort fallbacks by their consensus weight to advertised bandwidth factor,
   # lowest to highest
@@ -1724,8 +1750,8 @@ class CandidateList(dict):
         key_value_split = item.split('=')
         kvl = len(key_value_split)
         if kvl < 1 or kvl > 2:
-          print '#error Bad %s item: %s, format is key=value.'%(
-                                                 file_name, item)
+          print('#error Bad %s item: %s, format is key=value.'%(
+                                                 file_name, item))
         if kvl == 1:
           # assume that entries without a key are the ipv4 address,
           # perhaps with a dirport
@@ -1733,8 +1759,8 @@ class CandidateList(dict):
           ipv4_maybe_dirport_split = ipv4_maybe_dirport.split(':')
           dirl = len(ipv4_maybe_dirport_split)
           if dirl < 1 or dirl > 2:
-            print '#error Bad %s IPv4 item: %s, format is ipv4:port.'%(
-                                                        file_name, item)
+            print('#error Bad %s IPv4 item: %s, format is ipv4:port.'%(
+                                                        file_name, item))
           if dirl >= 1:
             relay_entry['ipv4'] = ipv4_maybe_dirport_split[0]
           if dirl == 2:
@@ -1746,8 +1772,8 @@ class CandidateList(dict):
             ipv6_orport_split = key_value_split[1].rsplit(':', 1)
             ipv6l = len(ipv6_orport_split)
             if ipv6l != 2:
-              print '#error Bad %s IPv6 item: %s, format is [ipv6]:orport.'%(
-                                                          file_name, item)
+              print('#error Bad %s IPv6 item: %s, format is [ipv6]:orport.'%(
+                                                          file_name, item))
             relay_entry['ipv6_addr'] = ipv6_orport_split[0]
             relay_entry['ipv6_orport'] = ipv6_orport_split[1]
       relaylist.append(relay_entry)
@@ -1836,7 +1862,7 @@ class CandidateList(dict):
     # use the low-median when there are an evan number of fallbacks,
     # for consistency with the bandwidth authorities
     if len(self.fallbacks) > 0:
-      median_position = (len(self.fallbacks) - 1) / 2
+      median_position = (len(self.fallbacks) - 1) // 2
       if not require_advertised_bandwidth:
         return self.fallbacks[median_position]
       # if we need advertised_bandwidth but this relay doesn't have it,
@@ -2002,10 +2028,10 @@ class CandidateList(dict):
     # descriptors
     #
     # add an attempt for every MAX_FINGERPRINTS (or part thereof) in the list
-    max_retries += (len(fingerprint_list) + MAX_FINGERPRINTS - 1) / MAX_FINGERPRINTS
+    max_retries += (len(fingerprint_list) + MAX_FINGERPRINTS - 1) // MAX_FINGERPRINTS
     remaining_list = fingerprint_list
     desc_list = []
-    for _ in xrange(max_retries):
+    for _ in six.moves.range(max_retries):
       if len(remaining_list) == 0:
         break
       new_desc_list = CandidateList.get_fallback_descriptors_once(remaining_list[0:MAX_FINGERPRINTS])
@@ -2064,8 +2090,8 @@ class CandidateList(dict):
     # now we have at least max_count successful candidates,
     # or we've tried them all
     original_count = len(self.fallbacks)
-    self.fallbacks = filter(lambda x: x.get_fallback_download_consensus(),
-                            self.fallbacks)
+    self.fallbacks = list(filter(lambda x: x.get_fallback_download_consensus(),
+                                 self.fallbacks))
     # some of these failed the check, others skipped the check,
     # if we already had enough successful downloads
     failed_count = original_count - len(self.fallbacks)
@@ -2213,15 +2239,16 @@ class CandidateList(dict):
 
   # return a list of fallbacks which are on the IPv4 ORPort port
   def fallbacks_on_ipv4_orport(self, port):
-    return filter(lambda x: x.orport == port, self.fallbacks)
+    return list(filter(lambda x: x.orport == port, self.fallbacks))
 
   # return a list of fallbacks which are on the IPv6 ORPort port
   def fallbacks_on_ipv6_orport(self, port):
-    return filter(lambda x: x.ipv6orport == port, self.fallbacks_with_ipv6())
+    return list(filter(lambda x: x.ipv6orport == port,
+                       self.fallbacks_with_ipv6()))
 
   # return a list of fallbacks which are on the DirPort port
   def fallbacks_on_dirport(self, port):
-    return filter(lambda x: x.dirport == port, self.fallbacks)
+    return list(filter(lambda x: x.dirport == port, self.fallbacks))
 
   # log a message about the proportion of fallbacks on IPv4 ORPort port
   # and return that count
@@ -2282,7 +2309,7 @@ class CandidateList(dict):
 
   # return a list of fallbacks which cache extra-info documents
   def fallbacks_with_extra_info_cache(self):
-    return filter(lambda x: x._extra_info_cache, self.fallbacks)
+    return list(filter(lambda x: x._extra_info_cache, self.fallbacks))
 
   # log a message about the proportion of fallbacks that cache extra-info docs
   def describe_fallback_extra_info_caches(self):
@@ -2294,7 +2321,7 @@ class CandidateList(dict):
 
   # return a list of fallbacks which have the Exit flag
   def fallbacks_with_exit(self):
-    return filter(lambda x: x.is_exit(), self.fallbacks)
+    return list(filter(lambda x: x.is_exit(), self.fallbacks))
 
   # log a message about the proportion of fallbacks with an Exit flag
   def describe_fallback_exit_flag(self):
@@ -2306,7 +2333,7 @@ class CandidateList(dict):
 
   # return a list of fallbacks which have an IPv6 address
   def fallbacks_with_ipv6(self):
-    return filter(lambda x: x.has_ipv6(), self.fallbacks)
+    return list(filter(lambda x: x.has_ipv6(), self.fallbacks))
 
   # log a message about the proportion of fallbacks on IPv6
   def describe_fallback_ip_family(self):
@@ -2421,22 +2448,22 @@ def list_fallbacks(offer_list, exact=False):
   """ Fetches required onionoo documents and evaluates the
       fallback directory criteria for each of the relays,
       passing exact to apply_filter_lists(). """
-  print "/* type=fallback */"
-  print ("/* version={} */"
-         .format(cleanse_c_multiline_comment(FALLBACK_FORMAT_VERSION)))
+  print("/* type=fallback */")
+  print("/* version={} */"
+        .format(cleanse_c_multiline_comment(FALLBACK_FORMAT_VERSION)))
   now = datetime.datetime.utcnow()
   timestamp = now.strftime('%Y%m%d%H%M%S')
   print ("/* timestamp={} */"
          .format(cleanse_c_multiline_comment(timestamp)))
   if offer_list['check_existing']:
-      print "/* source=fallback */"
+      print("/* source=fallback */")
   else:
       # TODO: when we implement #24839, change this to descriptor,offer-list
       # We might want add each key based on the size of the offer list, and
       # the number of descriptors with offer-fallback-dir lines.
-      print "/* source=offer-list */"
+      print("/* source=offer-list */")
   # end the header with a separator, to make it easier for parsers
-  print SECTION_SEPARATOR_COMMENT
+  print(SECTION_SEPARATOR_COMMENT)
 
   logging.warning('Downloading and parsing Onionoo data. ' +
                   'This may take some time.')
@@ -2468,8 +2495,8 @@ def list_fallbacks(offer_list, exact=False):
   # instead, there will be an info-level log during the eligibility check.
   initial_count = len(candidates.fallbacks)
   excluded_count = candidates.apply_filter_lists(offer_list, exact=exact)
-  print candidates.summarise_filters(initial_count, excluded_count,
-          offer_list['check_existing'])
+  print(candidates.summarise_filters(initial_count, excluded_count,
+                                     offer_list['check_existing']))
   eligible_count = len(candidates.fallbacks)
 
   # calculate the measured bandwidth of each relay,
@@ -2479,9 +2506,9 @@ def list_fallbacks(offer_list, exact=False):
 
   # print the raw fallback list
   #for x in candidates.fallbacks:
-  #  print x.fallbackdir_line(True)
-  #  print json.dumps(candidates[x]._data, sort_keys=True, indent=4,
-  #                   separators=(',', ': '), default=json_util.default)
+  #  print(x.fallbackdir_line(True))
+  #  print(json.dumps(candidates[x]._data, sort_keys=True, indent=4,
+  #                   separators=(',', ': '), default=json_util.default))
 
   # impose mandatory conditions here, like one per contact, family, IP
   # in measured bandwidth order
@@ -2520,19 +2547,19 @@ def list_fallbacks(offer_list, exact=False):
 
   # output C comments summarising the fallback selection process
   if len(candidates.fallbacks) > 0:
-    print candidates.summarise_fallbacks(eligible_count, operator_count,
+    print(candidates.summarise_fallbacks(eligible_count, operator_count,
                                          failed_count, guard_count,
                                          target_count,
-                                         offer_list['check_existing'])
+                                         offer_list['check_existing']))
   else:
-    print '/* No Fallbacks met criteria */'
+    print('/* No Fallbacks met criteria */')
 
   # output C comments specifying the Onionoo data used to create the list
   for s in fetch_source_list():
-    print describe_fetch_source(s)
+    print(describe_fetch_source(s))
 
   # start the list with a separator, to make it easy for parsers
-  print SECTION_SEPARATOR_COMMENT
+  print(SECTION_SEPARATOR_COMMENT)
 
   # sort the list differently depending on why we've created it:
   # if we're outputting the final fallback list, sort by fingerprint
@@ -2544,7 +2571,7 @@ def list_fallbacks(offer_list, exact=False):
   candidates.sort_fallbacks_by(OUTPUT_SORT_FIELD)
 
   for x in candidates.fallbacks:
-    print x.fallbackdir_line(candidates.fallbacks, prefilter_fallbacks)
+    print(x.fallbackdir_line(candidates.fallbacks, prefilter_fallbacks))
 
 if __name__ == "__main__":
   main()
