@@ -2016,7 +2016,19 @@ class CandidateList(dict):
   # returns an empty list on exception
   @staticmethod
   def get_fallback_descriptors_once(fingerprint_list):
-    desc_list = get_server_descriptors(fingerprints=fingerprint_list).run(suppress=True)
+    found_list = []
+    desc_list = []
+    desc_query = get_server_descriptors(
+      fingerprint_list,
+      retries=3,
+      timeout=30)
+    for desc in desc_query.run(suppress=True):
+      assert desc.fingerprint in fingerprint_list
+      # Skip duplicates on retries
+      if desc.fingerprint in found_list:
+        continue
+      found_list.append(desc.fingerprint)
+      desc_list.append(desc)
     return desc_list
 
   # try up to max_retries times to get the descriptors for fingerprint_list
