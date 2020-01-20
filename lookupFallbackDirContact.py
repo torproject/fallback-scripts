@@ -18,14 +18,14 @@ import stem.util.tor_tools as tor_tools
 
 if len(sys.argv) <= 1:
   print("Usage: {} fingerprint ...".format(sys.argv[0]))
-  sys.exit(-1)
+  sys.exit(1)
 
 input_list = sys.argv[1:]
 
 for fingerprint in input_list:
   if not tor_tools.is_valid_fingerprint(fingerprint):
     print("'%s' isn't a valid relay fingerprint" % fingerprint)
-    sys.exit(1)
+    sys.exit(2)
 
 found_list = []
 # we need descriptors, because the consensus does not have contact infos

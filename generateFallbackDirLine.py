@@ -25,7 +25,7 @@ input_list = sys.argv[1:]
 for fingerprint in input_list:
   if not tor_tools.is_valid_fingerprint(fingerprint):
     print("'%s' isn't a valid relay fingerprint" % fingerprint)
-    sys.exit(1)
+    sys.exit(2)
 
 found_list = []
 desc_query = remote.get_server_descriptors(input_list,
