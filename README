@@ -1,6 +1,10 @@
 The Tor Fallback Scripts are used to generate the hard-coded fallback
 directory mirror lists for Tor.
 
+NOTE: This script is based on arti
+(https://gitlab.torproject.org/tpo/core/arti) which is under heavy development
+and thus this tool can break at any moment or maybe even not work.
+
 Who needs to run these scripts?
 
 You probably don't need to run these scripts. They are used by the Tor
@@ -16,26 +20,14 @@ your Internet address and the services you use. Tor uses fallback directory
 mirrors when it is first installed, to find the rest of the Tor network. It
 also uses them when its cached directory documents are very old.
 
-To generate a fallback list using the current whitelist:
-        ./updateFallbackDirs.py
+To run:
+        $ cargo run --release
 
-To remove failed fallbacks from the existing hard-coded fallback list:
-        cd ..
-        git clone https://git.torproject.org/tor.git
-        cd fallback-scripts
-        ./updateFallbackDirs.py check_existing
+It will output two files that is one for tor.git and one for arti.git which
+will be prefixed "tor-git_" and "tor-arti_".
 
-Instructions for updating the whitelist, rebuilding, and backporting:
-        https://trac.torproject.org/projects/tor/wiki/doc/UpdatingFallbackDirectoryMirrors
-
-What is a fallback directory mirror?
-        https://trac.torproject.org/projects/tor/wiki/doc/FallbackDirectoryMirrors
-
-Download new versions:
-        https://git.torproject.org/fallback-scripts.git
-
-Browse source code:
-        https://gitweb.torproject.org/fallback-scripts.git
+Source:
+        https://gitlab.torproject.org/tpo/core/fallback-scripts.git
 
 Home page:
         https://www.torproject.org/
