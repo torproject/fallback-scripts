@@ -44,7 +44,7 @@ fn write_file_tor_git(writer: &mut BufWriter<&File>, relay: &tor_netdir::Relay) 
     )?;
     writeln!(
         writer,
-        "\" id={}\",",
+        "\" id={}\"",
         relay.rsa_id().to_string().to_uppercase().replace("$", "")
     )?;
     writeln!(writer, "\" ed={}\",", relay.md().ed25519_id().to_string())?;
