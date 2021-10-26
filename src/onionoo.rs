@@ -14,7 +14,6 @@ pub struct OnionooRelay {
 
 /// Search onionoo and return a vector of fingerprint strings corresponding to
 /// the stablest relays
-#[tokio::main]
 pub async fn get_relay_fprs_from_onionoo() -> Result<Vec<String>, Error> {
     // Query URL found in the old fallbackdir scripts
     let request_url = format!("https://onionoo.torproject.org/details?fields=fingerprint%2Cnickname%2Ccontact%2Clast_changed_address_or_port%2Cconsensus_weight%2Cadvertised_bandwidth%2Cor_addresses%2Cdir_address%2Crecommended_version%2Cflags%2Ceffective_family%2Cplatform&type=relay&first_seen_days=90-&last_seen_days=-0&flag=V2Dir&order=-consensus_weight%2Cfirst_seen");

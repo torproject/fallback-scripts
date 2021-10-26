@@ -6,18 +6,19 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-#[features]
-#tokio = [ "tor-client/tokio", "tor-rtcompat/tokio" ]
+[features]
+default = [ "tokio" ]
+tokio = [ "tor-rtcompat/tokio" ]
 
 [dependencies]
 anyhow = "1.0.38"
 chrono = "0.4"
 rand = "0.8.3"
 reqwest = { version = "0.11", features = ["json"] }
-serde = { version = "1.0.124", features = ["derive"] }
-tokio = { version = "1", features = ["full"] }
+serde = { version = "1", features = ["derive"] }
+tokio-crate = { package = "tokio", version = "1.7.0", features = ["rt", "rt-multi-thread", "io-util", "net", "time", "macros" ] }
 
-tor-client = { git = "https://gitlab.torproject.org/tpo/core/arti.git", features = ["experimental-api"]}
+arti-client = { git = "https://gitlab.torproject.org/tpo/core/arti.git", features = ["experimental-api"]}
 tor-dirmgr = { git = "https://gitlab.torproject.org/tpo/core/arti.git" }
 tor-netdir = { git = "https://gitlab.torproject.org/tpo/core/arti.git", features = ["experimental-api"] }
 tor-netdoc = { git = "https://gitlab.torproject.org/tpo/core/arti.git" }

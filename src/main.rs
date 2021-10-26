@@ -3,19 +3,18 @@ use chrono::Utc;
 use rand::seq::SliceRandom;
 use std::fs::File;
 use std::io::{BufWriter, Write};
-use std::sync::Arc;
+use tokio_crate as tokio;
+use tor_rtcompat::tokio::TokioRuntimeHandle;
 
-use tor_client;
-use tor_dirmgr;
+use arti_client::{self, TorClientConfig};
 use tor_netdir;
-use tor_netdoc::doc::netstatus::RouterFlags;
+use tor_netdoc::doc::netstatus::RelayFlags;
 
 mod onionoo;
 
 // Header format from dir-list-spec.txt but static so Stem is happy about it. In the future, we
 // want to stop doing that.
-static HEADER_COMMENT: &'static str =
-"/* type=fallback */
+static HEADER_COMMENT: &'static str = "/* type=fallback */
 /* version=4.0.0 */
 /* timestamp=20210412000000 */
 /* source=offer-list */";
@@ -64,7 +63,8 @@ fn write_file_tor_arti(writer: &mut BufWriter<&File>, relay: &tor_netdir::Relay)
     writeln!(writer, "        &[")?;
     writeln!(
         writer,
-        "{: <12}{}", "",
+        "{: <12}{}",
+        "",
         relay
             .rs()
             .orport_addrs()
@@ -93,57 +93,55 @@ fn write_header_to_file(writer: &mut BufWriter<&File>) -> Result<()> {
     Ok(())
 }
 
-fn main() -> Result<()> {
-    let mut builder = tor_dirmgr::NetDirConfigBuilder::new();
-    builder.use_default_cache_path()?;
-    let config: tor_dirmgr::NetDirConfig = builder.finalize()?;
+#[tokio::main]
+async fn main() -> Result<()> {
+    let config = TorClientConfig::sane_defaults()?;
+    let rt: TokioRuntimeHandle = tokio_crate::runtime::Handle::current().into();
 
     println!("[+] Fetching onionoo relays...");
-    let onionoo_relays_fprs = onionoo::get_relay_fprs_from_onionoo()?;
+    let onionoo_relays_fprs = onionoo::get_relay_fprs_from_onionoo().await?;
 
-    tor_rtcompat::task::block_on(async {
-        println!("[+] Bootstrapping to the Tor network...");
-        let tor_client = Arc::new(tor_client::TorClient::bootstrap(config).await?);
-        let netdir = tor_client.dirmgr().netdir();
+    println!("[+] Bootstrapping to the Tor network...");
+    let arti_client = arti_client::TorClient::bootstrap(rt, config).await?;
+    let netdir = arti_client.dirmgr().netdir();
 
-        println!("[+] Cross-referencing relays between Onionoo and Tor consensus...");
+    println!("[+] Cross-referencing relays between Onionoo and Tor consensus...");
 
-        let relays: Vec<_> = netdir
-            .relays()
-            .filter(|r| {
-                r.is_dir_cache()
-                    && r.rs().flags().contains(RouterFlags::FAST)
-                    && r.rs().flags().contains(RouterFlags::STABLE)
-                    && onionoo_relays_fprs.contains(&r.rsa_id().to_string().to_uppercase())
-            })
-            .collect();
+    let relays: Vec<_> = netdir
+        .relays()
+        .filter(|r| {
+            r.is_dir_cache()
+                && r.rs().flags().contains(RelayFlags::FAST)
+                && r.rs().flags().contains(RelayFlags::STABLE)
+                && onionoo_relays_fprs.contains(&r.rsa_id().to_string().to_uppercase())
+        })
+        .collect();
 
-        println!("Got {} relays. Randomly sampling 200...", relays.len());
+    println!("Got {} relays. Randomly sampling 200...", relays.len());
 
-        let picks = relays.choose_multiple(&mut rand::thread_rng(), 200);
+    let picks = relays.choose_multiple(&mut rand::thread_rng(), 200);
 
-        // Create files.
-        let tor_git_file = File::create("tor-git_fallback_dirs.inc")?;
-        let tor_arti_file = File::create("tor-arti_fallback_dirs.inc")?;
+    // Create files.
+    let tor_git_file = File::create("tor-git_fallback_dirs.inc")?;
+    let tor_arti_file = File::create("tor-arti_fallback_dirs.inc")?;
 
-        // Create writers.
-        let mut tor_git_writer = BufWriter::new(&tor_git_file);
-        let mut tor_arti_writer = BufWriter::new(&tor_arti_file);
+    // Create writers.
+    let mut tor_git_writer = BufWriter::new(&tor_git_file);
+    let mut tor_arti_writer = BufWriter::new(&tor_arti_file);
 
-        // Write header to both files.
-        write_header_to_file(&mut tor_git_writer)?;
-        write_header_to_file(&mut tor_arti_writer)?;
+    // Write header to both files.
+    write_header_to_file(&mut tor_git_writer)?;
+    write_header_to_file(&mut tor_arti_writer)?;
 
-        // Start the arti file.
-        writeln!(tor_arti_writer, "vec![")?;
+    // Start the arti file.
+    writeln!(tor_arti_writer, "vec![")?;
 
-        for relay in picks {
-            write_relay_to_files(&mut tor_git_writer, &mut tor_arti_writer, &relay)?;
-        }
+    for relay in picks {
+        write_relay_to_files(&mut tor_git_writer, &mut tor_arti_writer, &relay)?;
+    }
 
-        // End the arti file.
-        writeln!(tor_arti_writer, "]")?;
+    // End the arti file.
+    writeln!(tor_arti_writer, "]")?;
 
-        Ok(())
-    })
+    Ok(())
 }
