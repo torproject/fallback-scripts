@@ -95,7 +95,7 @@ fn write_header_to_file(writer: &mut BufWriter<&File>) -> Result<()> {
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let config = TorClientConfig::sane_defaults()?;
+    let config = TorClientConfig::default();
     let rt: TokioRuntimeHandle = tokio_crate::runtime::Handle::current().into();
 
     println!("[+] Fetching onionoo relays...");
