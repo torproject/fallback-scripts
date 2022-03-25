@@ -4,8 +4,6 @@ use rand::seq::SliceRandom;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use tokio_crate as tokio;
-use tor_rtcompat::tokio::TokioNativeTlsRuntime;
-
 use arti_client::{self, TorClientConfig};
 use tor_netdir;
 use tor_netdoc::doc::netstatus::RelayFlags;
@@ -96,14 +94,13 @@ fn write_header_to_file(writer: &mut BufWriter<&File>) -> Result<()> {
 #[tokio::main]
 async fn main() -> Result<()> {
     let config = TorClientConfig::default();
-    let rt: TokioNativeTlsRuntime = tokio_crate::runtime::Handle::current().into();
 
     println!("[+] Fetching onionoo relays...");
     let onionoo_relays_fprs = onionoo::get_relay_fprs_from_onionoo().await?;
 
     println!("[+] Bootstrapping to the Tor network...");
-    let arti_client = arti_client::TorClient::create_bootstrapped(rt, config).await?;
-    let netdir = arti_client.dirmgr().netdir()?;
+    let arti_client = arti_client::TorClient::create_bootstrapped(config).await?;
+    let netdir = arti_client.dirmgr().latest_netdir().unwrap();
 
     println!("[+] Cross-referencing relays between Onionoo and Tor consensus...");
 
