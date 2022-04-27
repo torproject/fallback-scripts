@@ -54,7 +54,7 @@ checksum = "a4c527152e37cf757a3f78aae5a06fbeefdb07ccc535c980a3208ee3060dd544"
 [[package]]
 name = "arti-client"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "derive_builder",
  "derive_more",
@@ -260,7 +260,7 @@ checksum = "c4872d67bab6358e59559027aa3b9157c53d9358c51423c17554809a8858e0f8"
 [[package]]
 name = "caret"
 version = "0.1.1"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 
 [[package]]
 name = "cc"
@@ -469,7 +469,7 @@ dependencies = [
 [[package]]
 name = "derive_builder"
 version = "0.11.2"
-source = "git+https://github.com/ijackson/rust-derive-builder?rev=4516209ce98f6506bf729aa7cdbced97747f7dd1#4516209ce98f6506bf729aa7cdbced97747f7dd1"
+source = "git+https://github.com/ijackson/rust-derive-builder?rev=ba0c1a5311bd9f93ddf5f5b8ec2a5f6f03b22fbe#ba0c1a5311bd9f93ddf5f5b8ec2a5f6f03b22fbe"
 dependencies = [
  "derive_builder_macro",
 ]
@@ -488,7 +488,7 @@ dependencies = [
 [[package]]
 name = "derive_builder_macro"
 version = "0.11.2"
-source = "git+https://github.com/ijackson/rust-derive-builder?rev=4516209ce98f6506bf729aa7cdbced97747f7dd1#4516209ce98f6506bf729aa7cdbced97747f7dd1"
+source = "git+https://github.com/ijackson/rust-derive-builder?rev=a69d5eee830bddd5ff9b146b51e27580b1a7b6b0#a69d5eee830bddd5ff9b146b51e27580b1a7b6b0"
 dependencies = [
  "derive_builder_core",
  "syn",
@@ -1774,7 +1774,7 @@ checksum = "8c31b5c4033f8fdde8700e4657be2c497e7288f01515be52168c631e2e4d4086"
 [[package]]
 name = "retry-error"
 version = "0.1.1"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 
 [[package]]
 name = "rsa"
@@ -2249,7 +2249,7 @@ dependencies = [
 [[package]]
 name = "tor-basic-utils"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "rand 0.8.5",
 ]
@@ -2257,7 +2257,7 @@ dependencies = [
 [[package]]
 name = "tor-bytes"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "arrayref",
  "bytes",
@@ -2273,7 +2273,7 @@ dependencies = [
 [[package]]
 name = "tor-cell"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "arrayref",
  "bitflags",
@@ -2293,7 +2293,7 @@ dependencies = [
 [[package]]
 name = "tor-cert"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "caret",
  "digest 0.10.3",
@@ -2306,7 +2306,7 @@ dependencies = [
 [[package]]
 name = "tor-chanmgr"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "async-trait",
  "derive_more",
@@ -2327,7 +2327,7 @@ dependencies = [
 [[package]]
 name = "tor-checkable"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "signature",
  "thiserror",
@@ -2337,7 +2337,7 @@ dependencies = [
 [[package]]
 name = "tor-circmgr"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "async-trait",
  "bounded-vec-deque",
@@ -2373,7 +2373,7 @@ dependencies = [
 [[package]]
 name = "tor-config"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "derive_builder",
  "directories",
@@ -2389,7 +2389,7 @@ dependencies = [
 [[package]]
 name = "tor-consdiff"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "digest 0.10.3",
  "hex",
@@ -2400,7 +2400,7 @@ dependencies = [
 [[package]]
 name = "tor-dirclient"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "async-compression",
  "base64",
@@ -2424,7 +2424,7 @@ dependencies = [
 [[package]]
 name = "tor-dirmgr"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "async-trait",
  "base64",
@@ -2466,7 +2466,7 @@ dependencies = [
 [[package]]
 name = "tor-error"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "backtrace",
  "derive_more",
@@ -2479,7 +2479,7 @@ dependencies = [
 [[package]]
 name = "tor-guardmgr"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "base64",
  "derive_builder",
@@ -2511,7 +2511,7 @@ dependencies = [
 [[package]]
 name = "tor-linkspec"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "tor-bytes",
  "tor-llcrypto",
@@ -2521,7 +2521,7 @@ dependencies = [
 [[package]]
 name = "tor-llcrypto"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "aes",
  "arrayref",
@@ -2550,7 +2550,7 @@ dependencies = [
 [[package]]
 name = "tor-netdir"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "bitflags",
  "derive_builder",
@@ -2573,7 +2573,7 @@ dependencies = [
 [[package]]
 name = "tor-netdoc"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "base64",
  "bitflags",
@@ -2599,7 +2599,7 @@ dependencies = [
 [[package]]
 name = "tor-persist"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "fslock",
  "sanitize-filename",
@@ -2613,7 +2613,7 @@ dependencies = [
 [[package]]
 name = "tor-proto"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "arrayref",
  "asynchronous-codec",
@@ -2649,7 +2649,7 @@ dependencies = [
 [[package]]
 name = "tor-protover"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "caret",
  "thiserror",
@@ -2658,7 +2658,7 @@ dependencies = [
 [[package]]
 name = "tor-rtcompat"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "async-native-tls",
  "async-trait",
@@ -2674,7 +2674,7 @@ dependencies = [
 [[package]]
 name = "tor-units"
 version = "0.2.0"
-source = "git+https://gitlab.torproject.org/tpo/core/arti.git#4b9ecc568066da1acbd07e41d28a4dddd1b6614b"
+source = "git+https://gitlab.torproject.org/tpo/core/arti.git#6f787e1e7707c2125a5d0df457e7894f944f4aa6"
 dependencies = [
  "derive_more",
  "thiserror",

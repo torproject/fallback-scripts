@@ -23,11 +23,3 @@ tor-dirmgr = { git = "https://gitlab.torproject.org/tpo/core/arti.git" }
 tor-netdir = { git = "https://gitlab.torproject.org/tpo/core/arti.git", features = ["experimental-api"] }
 tor-netdoc = { git = "https://gitlab.torproject.org/tpo/core/arti.git" }
 tor-rtcompat = { git = "https://gitlab.torproject.org/tpo/core/arti.git", features = ["tokio"] }
-
-[patch.crates-io.derive_builder]
-git = "https://github.com/ijackson/rust-derive-builder"
-rev = "4516209ce98f6506bf729aa7cdbced97747f7dd1"
-
-[patch.crates-io.derive_builder_core]
-git = "https://github.com/ijackson/rust-derive-builder"
-rev = "4516209ce98f6506bf729aa7cdbced97747f7dd1"
