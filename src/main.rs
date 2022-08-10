@@ -1,6 +1,7 @@
 use anyhow::Result;
 use chrono::Utc;
 use rand::seq::SliceRandom;
+use tor_dirmgr::Timeliness;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use tokio_crate as tokio;
@@ -100,7 +101,7 @@ async fn main() -> Result<()> {
 
     println!("[+] Bootstrapping to the Tor network...");
     let arti_client = arti_client::TorClient::create_bootstrapped(config).await?;
-    let netdir = arti_client.dirmgr().latest_netdir().unwrap();
+    let netdir = arti_client.dirmgr().netdir(Timeliness::Strict).unwrap();
 
     println!("[+] Cross-referencing relays between Onionoo and Tor consensus...");
 
